@@ -20,10 +20,9 @@ const int SERVO_PINS[6] = {13, 12, 14, 27, 26, 25};
 #endif
 
 // ---- config -----------------------------------------------------------------
-const char* WIFI_SSID = "Wokwi-GUEST";   // change for real router
-const char* WIFI_PASS = "";
+// WiFi / AP / MQTT credentials live in secrets.h (git-ignored). Copy secrets.example.h to start.
+#include "secrets.h"
 const char* AP_SSID = "RobotArm";        // fallback access point -> 192.168.4.1
-const char* AP_PASS = "robot1234";
 const int ESTOP_PIN = 4;                 // button to GND, toggles E-stop
 
 // ---- MQTT: control over the internet ----------------------------------------
@@ -31,9 +30,6 @@ const int ESTOP_PIN = 4;                 // button to GND, toggles E-stop
 #define MQTT_TLS 0                         // 1 = TLS (HiveMQ Cloud port 8883)
 const char* MQTT_HOST = "broker.hivemq.com"; // public test broker: anyone can publish, use a unique prefix
 const int MQTT_PORT = 1883;
-const char* MQTT_USER = "";
-const char* MQTT_PASS = "";
-const char* MQTT_PREFIX = "robot101/arm1"; // topics: <prefix>/cmd, /state, /status, /reply
 
 // joint angle = (servo - offset) * dir  — same table as the simulator
 struct Joint { const char* key; float minA, maxA, home, offset, dir; };
