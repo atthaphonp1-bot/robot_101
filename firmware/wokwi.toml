@@ -1,0 +1,9 @@
+[wokwi]
+version = 1
+firmware = '.pio/build/esp32/firmware.bin'
+elf = '.pio/build/esp32/firmware.elf'
+
+# simulator page connects to ws://localhost:8181 -> ESP32 port 81
+[[net.forward]]
+from = "localhost:8181"
+to = "target:81"

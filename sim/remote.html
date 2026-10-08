@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="th" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#f2f2f7">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>Robot Arm Remote</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f2f2f7;
+      --card: rgba(255,255,255,.72);
+      --text: #1d1d1f;
+      --muted: #6e6e73;
+      --fill: rgba(120,120,128,.12);
+      --accent: #0071e3;
+      --ok: #34c759;
+      --bad: #ff3b30;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #000;
+        --card: rgba(28,28,30,.72);
+        --text: #f5f5f7;
+        --muted: #98989d;
+        --fill: rgba(120,120,128,.24);
+        --accent: #0a84ff;
+        --ok: #30d158;
+        --bad: #ff453a;
+      }
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Noto Sans Thai", system-ui, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    }
+    main {
+      max-width: 520px;
+      margin: 0 auto;
+      padding-bottom: 40px;
+    }
+    [hidden] { display: none !important; }
+
+    .card {
+      margin: 12px 16px;
+      padding: 16px;
+      border-radius: 22px;
+      background: var(--card);
+      backdrop-filter: blur(24px) saturate(180%);
+      -webkit-backdrop-filter: blur(24px) saturate(180%);
+      box-shadow: 0 8px 30px rgba(0,0,0,.08);
+    }
+    .card h2 {
+      font-size: 15px;
+      font-weight: 600;
+      margin: 0 0 12px;
+    }
+    button {
+      font: inherit;
+      font-size: 15px;
+      font-weight: 600;
+      border: 0;
+      border-radius: 999px;
+      min-height: 44px;
+      padding: 0 18px;
+      background: var(--fill);
+      color: var(--text);
+      transition: transform .12s;
+    }
+    button:active { transform: scale(.96); }
+    button.primary {
+      background: var(--accent);
+      color: #fff;
+    }
+    .row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .row > button { flex: 1; }
+
+    .seg {
+      display: flex;
+      padding: 3px;
+      border-radius: 12px;
+      background: var(--fill);
+      margin-bottom: 12px;
+    }
+    .seg button {
+      flex: 1;
+      min-height: 34px;
+      border-radius: 9px;
+      background: transparent;
+      font-size: 13px;
+    }
+    .seg button.active {
+      background: var(--card);
+      box-shadow: 0 1px 4px rgba(0,0,0,.15);
+    }
+
+    input[type=text],
+    input[type=url],
+    input[type=password] {
+      width: 100%;
+      font: 15px inherit;
+      padding: 12px 14px;
+      border: 0;
+      border-radius: 12px;
+      background: var(--fill);
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+
+    input[type=range] {
+      width: 100%;
+      accent-color: var(--accent);
+      height: 28px;
+    }
+
+    .field label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 14px;
+      margin-top: 10px;
+    }
+
+    .muted {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .jog {
+      display: grid;
+      grid-template-columns: repeat(3,1fr);
+      gap: 8px;
+    }
+    .jog button {
+      min-height: 56px;
+      font-size: 17px;
+    }
+
+    #log {
+      font: 12px ui-monospace, Menlo, monospace;
+      max-height: 160px;
+      overflow: auto;
+      white-space: pre-wrap;
+      color: var(--muted);
+    }
+
+    #toast {
+      position: fixed;
+      left: 50%;
+      bottom: calc(24px + env(safe-area-inset-bottom));
+      transform: translateX(-50%);
+      background: rgba(0,0,0,.8);
+      color: #fff;
+      padding: 10px 18px;
+      border-radius: 999px;
+      font-size: 14px;
+      opacity: 0;
+      transition: opacity .3s;
+      pointer-events: none;
+    }
+    #toast.show { opacity: 1; }
+
+    .pill {
+      font-size: 12px;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: var(--fill);
+      color: var(--muted);
+    }
+    .pill.ok {
+      background: color-mix(in srgb, var(--ok) 18%, transparent);
+      color: var(--ok);
+    }
+    .pill.bad {
+      background: color-mix(in srgb, var(--bad) 18%, transparent);
+      color: var(--bad);
+    }
+    .pill.acc {
+      background: color-mix(in srgb, var(--accent) 18%, transparent);
+      color: var(--accent);
+    }
+
+    /* Emergency stop button – special styling */
+    #stopBtn {
+      display: block;
+      width: calc(100% - 32px);
+      margin: 12px 16px;
+      min-height: 64px;
+      background: var(--bad);
+      color: #fff;
+      font-size: 19px;
+      font-weight: 700;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <!-- Header -->
+    <header class="card" style="position:sticky;top:8px;z-index:5;display:flex;align-items:center;justify-content:space-between">
+      <h1 style="font-size:22px;margin:0">Robot Arm</h1>
+      <span id="status" class="pill">ออฟไลน์</span>
+      <button id="gearBtn" aria-label="ตั้งค่า">⚙︎</button>
+    </header>
+
+    <!-- MQTT Settings -->
+    <section id="settingsCard" class="card">
+      <h2>การเชื่อมต่อ MQTT</h2>
+      <input id="brokerUrl" type="url" placeholder="Broker URL">
+      <input id="topicPrefix" type="text" placeholder="Topic Prefix">
+      <input id="mqttUser" type="text" placeholder="username (ถ้ามี)">
+      <input id="mqttPass" type="password" placeholder="Password">
+      <button id="connectBtn" class="primary" style="width:100%;margin-top:8px;">เชื่อมต่อ</button>
+    </section>
+
+    <!-- Emergency Stop -->
+    <button id="stopBtn">หยุดฉุกเฉิน</button>
+
+    <!-- Arm Status -->
+    <section class="card">
+      <h2>สถานะแขน</h2>
+      <canvas id="armCanvas" style="width:100%;height:200px;display:block"></canvas>
+      <div class="row" style="justify-content:space-between;margin-top:8px">
+        <span id="jointsText" class="muted">—</span>
+        <span id="moveStatus" class="pill">นิ่ง</span>
+      </div>
+    </section>
+
+    <!-- Control -->
+    <section class="card">
+      <h2>ควบคุม</h2>
+
+      <div class="seg" id="modeSeg">
+        <button data-mode="joint" class="active">ข้อต่อ</button>
+        <button data-mode="cart">ตำแหน่ง</button>
+      </div>
+
+      <div id="jointPanel">
+        <div id="jointSliders"></div>
+      </div>
+
+      <div id="cartPanel" hidden>
+        <div class="seg" id="stepSeg">
+          <button data-step="5">5 mm</button>
+          <button data-step="10" class="active">10 mm</button>
+          <button data-step="25">25 mm</button>
+        </div>
+
+        <div class="jog">
+          <button data-jog="p+">เงย</button>
+          <button data-jog="z+">Z+ ขึ้น</button>
+          <button data-jog="x+">X+ หน้า</button>
+          <button data-jog="y+">Y+ ซ้าย</button>
+          <button id="homeBtn" class="primary" data-jog="home">Home</button>
+          <button data-jog="y-">Y− ขวา</button>
+          <button data-jog="p-">ก้ม</button>
+          <button data-jog="z-">Z− ลง</button>
+          <button data-jog="x-">X− หลัง</button>
+        </div>
+
+        <p id="targetText" class="muted"></p>
+      </div>
+    </section>
+
+    <!-- Gripper -->
+    <section class="card">
+      <h2>กริปเปอร์</h2>
+      <div class="row">
+        <button id="gripOpen">เปิด</button>
+        <button id="gripClose">ปิด</button>
+      </div>
+      <div class="field">
+        <label>ความเร็ว <span id="speedVal">90 °/s</span></label>
+        <input type="range" id="speed" min="10" max="360" value="90">
+      </div>
+    </section>
+
+    <!-- Saved Poses -->
+    <section class="card">
+      <h2>ท่าที่บันทึกไว้</h2>
+      <p id="posesInfo" class="muted"></p>
+      <div class="row">
+        <button id="playBtn" class="primary">เล่นทั้งหมด</button>
+        <button id="stopPlayBtn">หยุดเล่น</button>
+      </div>
+    </section>
+
+    <!-- Log -->
+    <section class="card">
+      <h2>Log</h2>
+      <div id="log"></div>
+    </section>
+  </main>
+
+  <!-- Toast -->
+  <div id="toast"></div>
+
+  <!-- Scripts -->
+  <script src="https://unpkg.com/mqtt@5.10.1/dist/mqtt.min.js"></script>
+  <script src="remote.js"></script>
+</body>
+</html>

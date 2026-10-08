@@ -1,0 +1,1363 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Robot Arm Simulator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --font:-apple-system, BlinkMacSystemFont, "SF Pro Text", "Noto Sans Thai", system-ui, sans-serif;
+    --mono:ui-monospace, "SF Mono", Menlo, monospace;
+    --text:#1d1d1f; --muted:#6e6e73; --hairline:rgba(0,0,0,.08);
+    --glass:rgba(255,255,255,.62); --glass-border:rgba(255,255,255,.75); --seg:#ffffff;
+    --fill:rgba(120,120,128,.12); --fill-2:rgba(120,120,128,.2); --track:rgba(120,120,128,.22);
+    --accent:#0071e3; --accent-ink:#fff; --accent-soft:rgba(0,113,227,.12);
+    --ok:#248a3d; --bad:#d70015; --switch:#34c759;
+    --shadow:0 24px 64px rgba(0,0,0,.12), 0 2px 8px rgba(0,0,0,.05);
+    --scene-bg:#eceef1; --floor:#e7e9ed; --grid1:#c6cad1; --grid2:#d8dbe0;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --text:#f5f5f7; --muted:#98989d; --hairline:rgba(255,255,255,.1);
+      --glass:rgba(30,30,32,.58); --glass-border:rgba(255,255,255,.12); --seg:#3a3a3c;
+      --fill:rgba(120,120,128,.24); --fill-2:rgba(120,120,128,.36); --track:rgba(120,120,128,.34);
+      --accent:#0a84ff; --accent-soft:rgba(10,132,255,.2); --ok:#30d158; --bad:#ff453a; --switch:#30d158;
+      --shadow:0 24px 64px rgba(0,0,0,.5);
+      --scene-bg:#111214; --floor:#141518; --grid1:#2f3137; --grid2:#202227;
+    }
+  }
+  :root[data-theme="dark"] {
+    --text:#f5f5f7; --muted:#98989d; --hairline:rgba(255,255,255,.1);
+    --glass:rgba(30,30,32,.58); --glass-border:rgba(255,255,255,.12); --seg:#3a3a3c;
+    --fill:rgba(120,120,128,.24); --fill-2:rgba(120,120,128,.36); --track:rgba(120,120,128,.34);
+    --accent:#0a84ff; --accent-soft:rgba(10,132,255,.2); --ok:#30d158; --bad:#ff453a; --switch:#30d158;
+    --shadow:0 24px 64px rgba(0,0,0,.5);
+    --scene-bg:#111214; --floor:#141518; --grid1:#2f3137; --grid2:#202227;
+  }
+  * { box-sizing:border-box; }
+  html, body { margin:0; height:100%; }
+  body { background:var(--scene-bg); color:var(--text); font:14px/1.45 var(--font); letter-spacing:-.01em;
+         -webkit-font-smoothing:antialiased; }
+  code, pre, .mono { font-family:var(--mono); }
+
+  #app { position:relative; height:100vh; overflow:hidden; }
+  #view { position:absolute; inset:0; }
+  #view canvas { position:absolute; inset:0; width:100%; height:100%; display:block; touch-action:none; }
+
+  /* Liquid-glass surfaces */
+  #hud, #panel { background:var(--glass); border:1px solid var(--glass-border); box-shadow:var(--shadow), inset 0 1px 0 rgba(255,255,255,.25);
+                 backdrop-filter:blur(30px) saturate(180%); -webkit-backdrop-filter:blur(30px) saturate(180%); }
+
+  #hud { position:absolute; top:20px; left:20px; border-radius:22px; padding:12px 18px; }
+  #hud .row { display:flex; gap:4px; align-items:baseline; font-variant-numeric:tabular-nums; }
+  #hud .lbl { color:var(--muted); width:44px; font-size:12px; font-weight:500; }
+  #hud b { font-weight:600; font-size:18px; min-width:44px; text-align:right; letter-spacing:-.02em; }
+  #hud .ax { color:var(--muted); font-size:11px; margin-right:8px; }
+  #chips { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
+  #chips:empty { display:none; }
+  .chip { font-size:12px; font-weight:500; padding:3px 10px; border-radius:999px; background:var(--accent-soft); color:var(--accent); }
+  .chip.bad { background:color-mix(in srgb, var(--bad) 14%, transparent); color:var(--bad); }
+  .chip.ok { background:color-mix(in srgb, var(--ok) 14%, transparent); color:var(--ok); }
+  #hint { position:absolute; left:22px; bottom:18px; max-width:calc(100% - 460px); color:var(--muted); font-size:12px; pointer-events:none; }
+
+  #panel { position:absolute; top:16px; right:16px; bottom:16px; width:384px; border-radius:30px;
+           display:flex; flex-direction:column; overflow:hidden; }
+  header { padding:22px 22px 14px; display:flex; flex-wrap:wrap; align-items:flex-start; justify-content:space-between; gap:8px; }
+  header h1 { font-size:22px; margin:0; font-weight:700; letter-spacing:-.025em; }
+  header p { margin:2px 0 0; color:var(--muted); font-size:13px; }
+  .tabs { display:flex; margin:0 18px 8px; padding:3px; border-radius:12px; background:var(--fill); }
+  .tabs button { flex:1; border:0; background:none; color:var(--text); font:inherit; font-size:13px; font-weight:500;
+                 padding:6px 4px; border-radius:9px; cursor:pointer; transition:background .25s, box-shadow .25s; }
+  .tabs button.active { background:var(--seg); box-shadow:0 1px 4px rgba(0,0,0,.12), 0 0 0 .5px rgba(0,0,0,.04); }
+  .tab { display:none; padding:12px 22px 26px; overflow:auto; flex:1; }
+  .tab.active { display:block; animation:fade .3s ease; }
+  @keyframes fade { from { opacity:0; transform:translateY(4px); } }
+
+  .field { margin-bottom:16px; }
+  .field .top { display:flex; justify-content:space-between; align-items:baseline; gap:8px; }
+  .field .name { font-size:13px; font-weight:500; }
+  .field .key { display:inline-block; font-size:11px; font-weight:600; color:var(--muted); background:var(--fill);
+                border-radius:6px; padding:1px 6px; margin-right:8px; }
+  .field output { font-size:13px; font-weight:600; font-variant-numeric:tabular-nums; }
+  .field .sub { color:var(--muted); font-size:11px; display:flex; justify-content:space-between; }
+
+  input[type=range] { -webkit-appearance:none; appearance:none; width:100%; height:26px; background:transparent; margin:2px 0 0; --p:50%; cursor:pointer; }
+  input[type=range]::-webkit-slider-runnable-track { height:5px; border-radius:5px;
+    background:linear-gradient(to right, var(--accent) var(--p), var(--track) var(--p)); }
+  input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:24px; height:24px; margin-top:-9.5px; border-radius:50%;
+    background:#fff; box-shadow:0 2px 7px rgba(0,0,0,.22), 0 0 0 .5px rgba(0,0,0,.06); transition:transform .15s; }
+  input[type=range]:active::-webkit-slider-thumb { transform:scale(1.12); }
+  input[type=range]::-moz-range-track { height:5px; border-radius:5px; background:var(--track); }
+  input[type=range]::-moz-range-progress { height:5px; border-radius:5px; background:var(--accent); }
+  input[type=range]::-moz-range-thumb { width:24px; height:24px; border:0; border-radius:50%; background:#fff; box-shadow:0 2px 7px rgba(0,0,0,.22); }
+
+  .sep { height:1px; background:var(--hairline); margin:18px 0; }
+  .btns { display:flex; flex-wrap:wrap; gap:8px; }
+  button.b { font:inherit; font-size:13px; font-weight:500; border:0; background:var(--fill); color:var(--text);
+             border-radius:999px; padding:8px 16px; cursor:pointer; transition:transform .12s, background .2s, filter .2s; }
+  button.b:hover { background:var(--fill-2); }
+  button.b:active { transform:scale(.96); }
+  button.b.primary { background:var(--accent); color:var(--accent-ink); }
+  button.b.primary:hover { filter:brightness(1.08); }
+  button.b:disabled { opacity:.5; cursor:default; }
+  .note { color:var(--muted); font-size:12px; margin:10px 0 0; }
+  .status { font-size:13px; padding:10px 14px; border-radius:14px; background:var(--fill); }
+  .status.ok { color:var(--ok); } .status.bad { color:var(--bad); }
+
+  label.check { display:flex; flex-direction:row-reverse; justify-content:space-between; gap:12px; align-items:center;
+                margin:12px 0; cursor:pointer; font-size:13px; }
+  label.check input { appearance:none; -webkit-appearance:none; flex:none; margin:0; width:44px; height:26px; border-radius:13px;
+                      background:var(--fill-2); position:relative; cursor:pointer; transition:background .25s; }
+  label.check input::after { content:""; position:absolute; top:2px; left:2px; width:22px; height:22px; border-radius:50%;
+                             background:#fff; box-shadow:0 2px 4px rgba(0,0,0,.2); transition:transform .25s cubic-bezier(.3,1.4,.6,1); }
+  label.check input:checked { background:var(--switch); }
+  label.check input:checked::after { transform:translateX(18px); }
+
+  input.txt, textarea { width:100%; font:13px var(--mono); color:var(--text); background:var(--fill); border:0;
+                        border-radius:12px; padding:10px 12px; outline:none; transition:box-shadow .2s; }
+  input.txt:focus, textarea:focus { box-shadow:0 0 0 3px var(--accent-soft); }
+  textarea { min-height:90px; resize:vertical; }
+  .inline { display:flex; gap:8px; align-items:center; } .inline input { flex:1; min-width:0; }
+  h3 { font-size:13px; margin:0 0 10px; font-weight:600; }
+
+  #prog { list-style:none; margin:12px 0; padding:0; background:var(--fill); border-radius:16px; max-height:260px; overflow:auto; }
+  #prog:empty::before { content:"ยังไม่มีท่า — ขยับแขนแล้วกด “บันทึกท่า”"; display:block; padding:14px; color:var(--muted); font-size:12px; }
+  #prog li { display:flex; align-items:center; gap:8px; padding:8px 12px; border-bottom:1px solid var(--hairline); }
+  #prog li:last-child { border-bottom:0; }
+  #prog li.active { background:var(--accent-soft); }
+  #prog .idx { color:var(--muted); width:20px; text-align:right; font-size:12px; }
+  #prog code { flex:1; font-size:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .mini { font:inherit; font-size:12px; font-weight:500; border:0; background:var(--seg); color:var(--accent);
+          border-radius:999px; padding:3px 10px; cursor:pointer; }
+  #log { font:12px var(--mono); height:150px; overflow:auto; background:var(--fill); border-radius:14px; padding:10px 12px;
+         margin-top:10px; white-space:pre-wrap; word-break:break-all; }
+  #log .in { color:var(--ok); } #log .out { color:var(--accent); } #log .err { color:var(--bad); }
+  pre.proto { font-size:12px; background:var(--fill); border-radius:14px; padding:12px; overflow:auto; margin:0; }
+  #camView { width:100%; aspect-ratio:1; border-radius:18px; background:var(--fill); display:block; }
+  #themeBtn { font-size:12px; padding:6px 12px; }
+
+  @media (max-width: 820px) {
+    #app { height:auto; overflow:visible; }
+    #view { position:relative; height:58vh; }
+    #panel { position:relative; top:auto; right:auto; bottom:auto; width:auto; margin:-28px 10px 12px; border-radius:26px; }
+    .tab { overflow:visible; }
+    #hint { display:none; }
+    #hud { top:12px; left:12px; padding:10px 14px; }
+    #hud b { font-size:15px; }
+  }
+
+  /* system diagram sheet */
+  .hbtns { display:flex; gap:6px; flex:none; } .hbtns .b { white-space:nowrap; padding:6px 12px; font-size:12px; }
+  .modal { position:fixed; inset:0; z-index:10; display:none; align-items:center; justify-content:center; padding:20px;
+             background:rgba(0,0,0,.45); isolation:isolate; }
+  .modal.open { display:flex; }
+  .modal .sheet { width:min(760px,100%); max-height:88vh; overflow:auto; border-radius:30px; padding:24px 24px 28px;
+                    background:var(--seg); border:1px solid var(--glass-border); box-shadow:var(--shadow);
+                    }
+  .modal .shead { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; margin-bottom:16px; }
+  .modal h2 { margin:0; font-size:22px; letter-spacing:-.025em; }
+  .modal .shead p { margin:2px 0 0; color:var(--muted); font-size:13px; }
+  .flow { display:flex; flex-direction:column; align-items:stretch; }
+  .step { display:grid; grid-template-columns:30px 1fr auto; gap:12px; align-items:start; padding:12px 14px;
+          border-radius:16px; background:var(--fill); }
+  .step .n { width:26px; height:26px; border-radius:50%; background:var(--accent); color:var(--accent-ink);
+             display:grid; place-items:center; font-size:12px; font-weight:600; }
+  .step b { font-size:14px; } .step div > span { display:block; color:var(--muted); font-size:12px; margin-top:2px; }
+  .step code { font-size:11.5px; color:var(--accent); }
+  .where { font-size:11px; font-weight:600; padding:2px 8px; border-radius:999px; white-space:nowrap; }
+  .w-ui { background:var(--accent-soft); color:var(--accent); }
+  .w-net { background:color-mix(in srgb, #bf5af2 16%, transparent); color:#bf5af2; }
+  .w-fw { background:color-mix(in srgb, #ff9f0a 18%, transparent); color:#c77700; }
+  .w-hw { background:color-mix(in srgb, var(--ok) 16%, transparent); color:var(--ok); }
+  .arrow { text-align:center; color:var(--muted); font-size:12px; line-height:1; padding:5px 0; }
+  .arrow::before { content:"↓"; display:block; font-size:16px; }
+  .pair { display:grid; grid-template-columns:repeat(auto-fit, minmax(190px, 1fr)); gap:8px; }
+  .pair .step { grid-template-columns:30px 1fr; }
+  .feedback { margin-top:14px; padding:12px 14px; border-radius:16px; border:1.5px dashed var(--fill-2); font-size:12.5px; }
+  .feedback b { display:block; margin-bottom:4px; font-size:14px; }
+  .feedback li { margin:3px 0; color:var(--muted); } .feedback ul { margin:0; padding-left:18px; }
+  @media (max-width:600px) { .pair { grid-template-columns:1fr; } .step { grid-template-columns:30px 1fr; } .step .where { grid-column:2; justify-self:start; } }
+  /* wiring schematic */
+  .wiring svg { width:100%; height:auto; display:block; }
+  .wiring .blk { fill:var(--fill); stroke:var(--fill-2); stroke-width:1.2; }
+  .wiring .t { fill:var(--text); font:600 13px var(--font); }
+  .wiring .s { fill:var(--muted); font:11px var(--font); }
+  .wiring .pin { fill:var(--text); font:11px var(--mono); }
+  .wiring .w { fill:none; stroke-width:2.4; stroke-linecap:round; stroke-linejoin:round; }
+  .wiring .dot { stroke:none; }
+  .c-3v3 { stroke:#ff9f0a; } .c-pwr { stroke:#ff453a; } .c-gnd { stroke:var(--text); } .c-sda { stroke:#0a84ff; }
+  .c-scl { stroke:#30d158; } .c-pwm { stroke:#bf5af2; } .c-sig { stroke:#64d2ff; }
+  .legend { display:flex; flex-wrap:wrap; gap:6px 14px; font-size:12px; margin:4px 0 12px; }
+  .legend i { display:inline-block; width:18px; height:3px; border-radius:2px; vertical-align:middle; margin-right:6px; }
+  table.pins { width:100%; border-collapse:collapse; font-size:12.5px; margin-top:14px; }
+  table.pins th, table.pins td { text-align:left; padding:6px 8px; border-bottom:1px solid var(--hairline); }
+  table.pins th { color:var(--muted); font-weight:500; font-size:12px; }
+  table.pins td:first-child { font-family:var(--mono); white-space:nowrap; }
+  .warn { margin-top:12px; padding:10px 14px; border-radius:14px; background:color-mix(in srgb, var(--bad) 10%, transparent); font-size:12.5px; }
+  .warn b { color:var(--bad); }
+</style>
+<script src="https://unpkg.com/mqtt@5.10.1/dist/mqtt.min.js"></script>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+</head>
+<body>
+<div id="app">
+  <section id="view">
+    <div id="hud">
+      <div class="row"><span class="lbl">TCP</span>
+        <b id="hx">0</b><span class="ax">X</span><b id="hy">0</b><span class="ax">Y</span><b id="hz">0</b><span class="ax">Z mm</span></div>
+      <div class="row"><span class="lbl">Pitch</span><b id="hp">0</b><span class="ax">°</span></div>
+      <div id="chips"></div>
+    </div>
+    <div id="hint">ลากเมาส์ = หมุนมุมมอง · Scroll = ซูม · ลากลูกศรที่ลูกบอลเขียว = ย้ายเป้าหมาย IK</div>
+  </section>
+
+  <aside id="panel">
+    <header>
+      <div>
+        <h1>Robot Arm Simulator</h1>
+        <p>6DOF · Servo MG996R · Digital Twin</p>
+      </div>
+      <div class="hbtns"><button class="b" id="diagBtn">ผังระบบ</button><button class="b" id="wireBtn">วงจร</button><button class="b" id="netBtn">เครือข่าย</button><button class="b" id="dashBtn">แดชบอร์ด</button><button class="b" id="themeBtn">ธีม: อัตโนมัติ</button></div>
+    </header>
+    <nav class="tabs">
+      <button data-tab="joints" class="active">ข้อต่อ</button>
+      <button data-tab="ik">IK</button>
+      <button data-tab="teach">สอนท่า</button>
+      <button data-tab="vision">กล้อง</button>
+      <button data-tab="connect">เชื่อมต่อ</button>
+    </nav>
+
+    <!-- Joints -->
+    <div class="tab active" id="tab-joints">
+      <div class="field">
+        <div class="top"><span class="name">ความเร็ว</span><output id="speedOut">90 °/s</output></div>
+        <input type="range" id="speed" min="10" max="360" step="5" value="90">
+      </div>
+      <div class="sep"></div>
+      <div id="joints"></div>
+      <div class="btns">
+        <button class="b primary" id="homeBtn">Home</button>
+        <button class="b" id="candleBtn">ตั้งตรง</button>
+        <button class="b" id="stopBtn">หยุด</button>
+      </div>
+      <p class="note">ค่าบน slider คือ “มุม servo” 0–180° แบบเดียวกับที่ส่งให้ servo จริง</p>
+    </div>
+
+    <!-- IK -->
+    <div class="tab" id="tab-ik">
+      <div id="ikFields"></div>
+      <label class="check"><input type="checkbox" id="autoPitch" checked> ปรับ pitch อัตโนมัติถ้าเอื้อมไม่ถึง</label>
+      <label class="check"><input type="checkbox" id="showMarker" checked> แสดงเป้าหมาย (ลากได้ในฉาก 3D)</label>
+      <div id="ikStatus" class="status">—</div>
+      <div class="btns" style="margin-top:12px">
+        <button class="b" id="syncMarker">ย้ายเป้าหมายมาที่ปลายแขน</button>
+      </div>
+      <p class="note">พิกัดหุ่นยนต์: X = ด้านหน้า, Y = ด้านซ้าย, Z = ขึ้น (หน่วย mm, จุดกำเนิดอยู่กลางฐาน) · TCP = จุดกึ่งกลางระหว่างนิ้วกริปเปอร์</p>
+    </div>
+
+    <!-- Teach -->
+    <div class="tab" id="tab-teach">
+      <div class="btns">
+        <button class="b primary" id="recBtn">บันทึกท่า</button>
+        <button class="b" id="playBtn">▶ เล่น</button>
+        <button class="b" id="pauseBtn">■ หยุด</button>
+        <button class="b" id="clearBtn">ลบทั้งหมด</button>
+      </div>
+      <label class="check"><input type="checkbox" id="loop"> เล่นวนซ้ำ</label>
+      <div class="field">
+        <div class="top"><span class="name">หน่วงระหว่างท่า</span><output id="delayOut">300 ms</output></div>
+        <input type="range" id="delay" min="0" max="2000" step="50" value="300">
+      </div>
+      <ol id="prog"></ol>
+      <div class="btns">
+        <button class="b" id="demoBtn">เดโม: หยิบกล่องไปวางซ้อน</button>
+        <button class="b" id="resetBtn">รีเซ็ตกล่อง</button>
+      </div>
+      <div class="sep"></div>
+      <h3>Export / Import (JSON)</h3>
+      <textarea id="io" spellcheck="false" placeholder='[{"j":[90,90,135,135,90,80]}]'></textarea>
+      <div class="btns" style="margin-top:8px">
+        <button class="b" id="exportBtn">Export</button>
+        <button class="b" id="importBtn">Import</button>
+      </div>
+      <p class="note">รูปแบบเดียวกันนี้ใช้กับ firmware ESP32 ได้ทันที (ส่งทีละท่า)</p>
+    </div>
+
+    <!-- Vision -->
+    <div class="tab" id="tab-vision">
+      <canvas id="camView" width="256" height="256"></canvas>
+      <div class="field" style="margin-top:12px">
+        <div class="top"><span class="name">สีที่จะหยิบ</span></div>
+        <div class="tabs" id="visColor" style="margin:6px 0 0">
+          <button data-c="all" class="active">ทุกสี</button><button data-c="red">แดง</button>
+          <button data-c="blue">น้ำเงิน</button><button data-c="yellow">เหลือง</button>
+        </div>
+      </div>
+      <div class="btns">
+        <button class="b primary" id="visPick">หาวัตถุแล้วหยิบ</button>
+        <button class="b" id="visShuffle">สุ่มตำแหน่งกล่อง</button>
+        <button class="b" id="visSave">บันทึกภาพ</button>
+      </div>
+      <div id="visList" class="status" style="margin-top:12px">—</div>
+      <p class="note">กล้องจำลองมองจากด้านบน (500×500 mm) · แยกสีด้วย HSV + หากลุ่มพิกเซล (connected components) แบบเดียวกับ OpenCV ใน <code>vision/vision_pick.py</code> · ภาพที่บันทึกใช้ทดสอบกับ Python ได้: <code>--source sim_camera.png --sim-calib</code></p>
+    </div>
+
+    <!-- Connect -->
+    <div class="tab" id="tab-connect">
+      <h3>ต่อ ESP32 จริงผ่าน WebSocket</h3>
+      <div class="inline">
+        <input class="txt" id="wsUrl" value="ws://localhost:8181">
+        <button class="b" id="wsBtn">เชื่อมต่อ</button>
+      </div>
+      <label class="check"><input type="checkbox" id="mirror" checked> ส่งท่าไปแขนจริงอัตโนมัติ (Digital Twin)</label>
+      <div class="sep"></div>
+      <h3>MQTT ผ่านอินเทอร์เน็ต</h3>
+      <p class="note" style="margin:0 0 8px">📱 หน้าควบคุมสำหรับมือถือ: <a href="remote.html" target="_blank" style="color:var(--accent)">remote.html</a></p>
+      <input class="txt" id="mqUrl" value="wss://broker.hivemq.com:8884/mqtt" aria-label="Broker URL">
+      <div class="inline" style="margin-top:8px">
+        <input class="txt" id="mqPrefix" value="robot101/arm1" aria-label="Topic prefix">
+        <button class="b" id="mqBtn">เชื่อมต่อ</button>
+      </div>
+      <div class="inline" style="margin-top:8px">
+        <input class="txt" id="mqUser" placeholder="username (ถ้ามี)" autocomplete="off">
+        <input class="txt" id="mqPass" type="password" placeholder="password" autocomplete="off">
+      </div>
+      <p class="note">Topic: <code>&lt;prefix&gt;/cmd</code> ส่งคำสั่ง · <code>/state</code> สถานะ · <code>/status</code> online/offline · <code>/reply</code> ผลตอบ · broker สาธารณะใครก็ส่งคำสั่งได้ → เปลี่ยน prefix เป็นชื่อเฉพาะ หรือใช้ HiveMQ Cloud (ฟรี, มี user/password + TLS)</p>
+      <div class="sep"></div>
+      <h3>Command console</h3>
+      <div class="inline">
+        <input class="txt" id="cmd" placeholder='{"ik":[180,0,60,-90]}'>
+        <button class="b primary" id="cmdBtn">ส่ง</button>
+      </div>
+      <div id="log"></div>
+      <div class="sep"></div>
+      <h3>Protocol (JSON ต่อบรรทัด)</h3>
+<pre class="proto">{"j":[90,90,135,135,90,80]}  มุม servo J1–J6
+{"ik":[x,y,z,pitch]}           ไปที่พิกัด (mm, °)
+{"grip":110}                   กริปเปอร์ 10=ปิด 120=เปิด
+{"speed":120}                  ความเร็ว °/s
+{"home":1}                     กลับท่า Home
+{"stop":1}                     หยุดทันที</pre>
+      <p class="note">ถ้าเปิดหน้านี้ผ่าน https เบราว์เซอร์จะบล็อก ws:// — ให้เปิดจากไฟล์ในเครื่องหรือ http://localhost</p>
+    </div>
+  </aside>
+</div>
+
+<div id="dash" class="modal" role="dialog" aria-modal="true" aria-labelledby="dashTitle">
+  <div class="sheet wiring">
+    <div class="shead">
+      <div><h2 id="dashTitle">ผังแดชบอร์ดมือถือ</h2>
+        <p>remote.html: แต่ละส่วนบนจอส่งคำสั่งอะไร และรับอะไรกลับ</p></div>
+      <button class="b" data-close aria-label="ปิด">✕</button>
+    </div>
+    <div class="legend">
+      <span><i style="background:#0a84ff"></i>คำสั่ง → &lt;prefix&gt;/cmd</span>
+      <span><i style="background:#ff453a"></i>หยุดฉุกเฉิน</span>
+      <span><i style="background:#30d158"></i>ข้อมูลย้อนกลับ</span>
+      <span><i style="background:#bf5af2"></i>broker → ESP32</span>
+    </div>
+    <svg viewBox="0 0 720 470" role="img" aria-label="ผังแดชบอร์ดมือถือ: ส่วนต่าง ๆ บนหน้าจอ คำสั่ง JSON ที่ส่ง และข้อมูลที่รับกลับผ่าน MQTT">
+  <rect x="20" y="8" width="200" height="454" rx="32" fill="none" stroke="currentColor" stroke-opacity=".25" stroke-width="2"/>
+  <rect class="blk" x="34" y="26" width="172" height="40" rx="12"/><text class="t" x="46" y="46">สถานะ · ⚙ ตั้งค่า</text>
+  <rect class="blk" x="34" y="72" width="172" height="36" rx="12" style="fill:#ff453a"/><text class="t" x="46" y="92" style="fill:#fff">หยุดฉุกเฉิน</text>
+  <rect class="blk" x="34" y="114" width="172" height="70" rx="12"/><text class="t" x="46" y="134">Live view</text><text class="s" x="46" y="150">ภาพข้างแขน + มุม J1–J6</text>
+  <rect class="blk" x="34" y="192" width="172" height="110" rx="12"/><text class="t" x="46" y="212">ควบคุม</text><text class="s" x="46" y="228">ข้อต่อ: slider 6 ตัว</text>
+  <text class="s" x="46" y="246">ตำแหน่ง: ปุ่ม X Y Z ก้ม/เงย</text><text class="s" x="46" y="262">step 5 / 10 / 25 mm</text>
+  <rect class="blk" x="34" y="310" width="172" height="50" rx="12"/><text class="t" x="46" y="330">กริปเปอร์ · ความเร็ว</text><text class="s" x="46" y="346">เปิด / ปิด · Home</text>
+  <rect class="blk" x="34" y="368" width="172" height="44" rx="12"/><text class="t" x="46" y="388">ท่าที่บันทึกไว้</text><text class="s" x="46" y="404">เล่นทั้งหมด / หยุด</text>
+  <rect class="blk" x="34" y="418" width="172" height="32" rx="12"/><text class="t" x="46" y="438">Log</text>
+
+  <!-- outgoing commands -->
+  <path class="w c-pwr" d="M206 90H250"/><path class="w c-sda" d="M206 247H250"/>
+  <path class="w c-sda" d="M206 335H250"/><path class="w c-sda" d="M206 390H250"/>
+  <rect class="blk" x="250" y="70" width="230" height="44" rx="12"/><text class="pin" x="262" y="89">{{"stop":1}}</text><text class="s" x="262" y="106">ส่งทันที · หยุดเล่นท่า</text>
+  <rect class="blk" x="250" y="214" width="230" height="66" rx="12"/><text class="pin" x="262" y="233">{{"j":[6 มุม]}}</text><text class="s" x="262" y="250">slider · ส่งไม่เกินทุก 120 ms</text>
+  <text class="pin" x="262" y="272">{"ik":[x,y,z,pitch]}</text>
+  <rect class="blk" x="250" y="312" width="230" height="46" rx="12"/><text class="pin" x="262" y="331">{{"grip"}} {{"speed"}} {{"home"}}</text><text class="s" x="262" y="348">กดครั้งเดียว ส่งครั้งเดียว</text>
+  <rect class="blk" x="250" y="366" width="230" height="46" rx="12"/><text class="pin" x="262" y="385">{{"j":ท่า}} ทีละท่า</text><text class="s" x="262" y="402">รอ state moving=false (≤ 8 s)</text>
+  <path class="w c-sda" d="M480 92H500M480 247H500M480 335H500M480 389H500M500 92V389"/>
+  <path class="w c-sda" d="M500 110H520"/>
+
+  <!-- broker + esp32 -->
+  <rect class="blk" x="520" y="70" width="180" height="76" rx="38"/>
+  <text class="t" x="610" y="102" text-anchor="middle">☁ MQTT Broker</text><text class="pin" x="610" y="122" text-anchor="middle">&lt;prefix&gt;/cmd</text>
+  <path class="w c-pwm" d="M610 146V300"/><text class="s" x="618" y="226">subscribe cmd</text>
+  <rect class="blk" x="520" y="300" width="180" height="80" rx="14"/>
+  <text class="t" x="534" y="326">ESP32 Firmware</text><text class="s" x="534" y="344">handleCommand → IK</text><text class="s" x="534" y="360">→ servo J1–J6</text>
+
+  <!-- feedback -->
+  <path class="w c-scl" d="M660 300V160" stroke-dasharray="6 5"/>
+  <path class="w c-scl" d="M560 70V46H206M560 46V40" stroke-dasharray="6 5"/>
+  <path class="w c-scl" d="M540 146V160H230V149H206" stroke-dasharray="6 5"/>
+  <text class="s" x="668" y="240">publish</text>
+  <text class="s" x="250" y="40">/status online·offline · /reply error → ป้ายสถานะ + toast</text>
+  <text class="s" x="250" y="176">/state 10 Hz → Live view + slider + กำลังขยับ/นิ่ง</text>
+</svg>
+    <table class="pins">
+      <tr><th>ส่วนบนจอ</th><th>การทำงาน</th></tr>
+      <tr><td>⚙ ตั้งค่า</td><td>Broker URL, prefix, user/password · จำ URL/prefix ไว้ในเครื่อง (ไม่จำรหัสผ่าน)</td></tr>
+      <tr><td>Slider ข้อต่อ</td><td>ลากแล้วส่งทุก 120 ms · ถ้าไม่ได้แตะ slider จะขยับตาม state ของแขนจริง</td></tr>
+      <tr><td>ปุ่มตำแหน่ง</td><td>กดค้างส่งซ้ำทุก 200 ms · ใช้ IK บน ESP32 · เอื้อมไม่ถึงจะมี toast แจ้ง</td></tr>
+      <tr><td>ท่าที่บันทึกไว้</td><td>อ่านท่าจากหน้า Simulator (เปิดจากเว็บเดียวกัน) แล้วส่งทีละท่า</td></tr>
+      <tr><td>หยุดฉุกเฉิน</td><td>ส่ง {"stop":1} ทันทีและหยุดการเล่นท่า · ปุ่ม E-STOP ที่ตัวแขนยังจำเป็นเสมอ</td></tr>
+    </table>
+  </div>
+</div>
+
+<div id="network" class="modal" role="dialog" aria-modal="true" aria-labelledby="netTitle">
+  <div class="sheet wiring">
+    <div class="shead">
+      <div><h2 id="netTitle">ผังการเชื่อมต่อ</h2>
+        <p>สั่งงานได้ 3 ทาง ทุกทางใช้คำสั่ง JSON ชุดเดียวกัน</p></div>
+      <button class="b" data-close aria-label="ปิด">✕</button>
+    </div>
+    <div class="legend">
+      <span><i style="background:#bf5af2"></i>MQTT (ผ่านอินเทอร์เน็ต)</span>
+      <span><i style="background:#0a84ff"></i>WebSocket (WiFi วงเดียวกัน)</span>
+      <span><i style="background:var(--text)"></i>USB Serial</span>
+    </div>
+    <svg viewBox="0 0 720 390" role="img" aria-label="ผังการเชื่อมต่อ: Web/มือถือ, Python, PC, MQTT broker, WiFi router, ESP32 และ servo">
+  <!-- links -->
+  <path class="w c-pwm" d="M190 62H270"/><path class="w c-pwm" d="M450 62H620V150"/>
+  <path class="w c-pwm" d="M360 100V180" stroke-dasharray="2 5"/>
+  <path class="w c-sda" d="M190 98H235V200H290M430 210H540" stroke-dasharray="7 5"/>
+  <path class="w c-sda" d="M190 200H290" stroke-dasharray="7 5"/>
+  <path class="w c-gnd" d="M190 318H515V240H540"/>
+  <path class="w c-pwr" d="M620 262V300"/>
+  <!-- labels on links -->
+  <text class="s" x="198" y="52">MQTT wss :8884</text>
+  <text class="s" x="460" y="52">MQTT tcp :1883 / tls :8883</text>
+  <text class="s" x="368" y="145">อินเทอร์เน็ต</text>
+  <text class="s" x="436" y="200">ws://IP:81</text>
+  <text class="s" x="246" y="120">WebSocket (LAN)</text>
+  <text class="s" x="300" y="310">USB Serial 115200</text>
+  <text class="s" x="630" y="285">PWM</text>
+  <!-- nodes -->
+  <rect class="blk" x="20" y="35" width="170" height="80" rx="14"/>
+  <text class="t" x="34" y="62">Web Sim / มือถือ</text><text class="s" x="34" y="80">เบราว์เซอร์ที่ไหนก็ได้</text><text class="s" x="34" y="97">mqtt.js · WebSocket</text>
+  <rect class="blk" x="20" y="165" width="170" height="70" rx="14"/>
+  <text class="t" x="34" y="192">Python Vision</text><text class="s" x="34" y="210">OpenCV · vision_pick.py</text>
+  <rect class="blk" x="20" y="285" width="170" height="66" rx="14"/>
+  <text class="t" x="34" y="312">PC (สาย USB)</text><text class="s" x="34" y="330">Serial Monitor / Python</text>
+  <rect class="blk" x="270" y="22" width="180" height="78" rx="39"/>
+  <text class="t" x="360" y="55" text-anchor="middle">☁ MQTT Broker</text><text class="s" x="360" y="74" text-anchor="middle">HiveMQ / Mosquitto / EMQX</text>
+  <rect class="blk" x="290" y="180" width="140" height="62" rx="14"/>
+  <text class="t" x="360" y="207" text-anchor="middle">WiFi Router</text><text class="s" x="360" y="225" text-anchor="middle">วงแลนบ้าน</text>
+  <rect class="blk" x="540" y="150" width="165" height="112" rx="14"/>
+  <text class="t" x="554" y="176">ESP32 Firmware</text>
+  <text class="pin" x="554" y="198">WS server :81</text><text class="pin" x="554" y="216">MQTT client</text>
+  <text class="pin" x="554" y="234">Serial · OLED</text><text class="pin" x="554" y="252">E-STOP GPIO4</text>
+  <rect class="blk" x="540" y="300" width="165" height="50" rx="14"/>
+  <text class="t" x="622" y="330" text-anchor="middle">Servo J1–J6</text>
+</svg>
+    <table class="pins">
+      <tr><th>Topic MQTT</th><th>ทิศทาง</th><th>ข้อมูล</th></tr>
+      <tr><td>&lt;prefix&gt;/cmd</td><td>ผู้สั่ง → ESP32</td><td>{"j":[…]} · {"ik":[x,y,z,p]} · {"grip":v} · {"home":1}</td></tr>
+      <tr><td>&lt;prefix&gt;/state</td><td>ESP32 → ผู้สั่ง</td><td>มุมปัจจุบัน + moving + estop (10 Hz ขณะขยับ, 1 Hz ตอนนิ่ง)</td></tr>
+      <tr><td>&lt;prefix&gt;/status</td><td>ESP32 → ผู้สั่ง</td><td>online / offline (retained + Last Will)</td></tr>
+      <tr><td>&lt;prefix&gt;/reply</td><td>ESP32 → ผู้สั่ง</td><td>error เช่น {"err":"unreachable"}</td></tr>
+    </table>
+    <table class="pins">
+      <tr><th>ทาง</th><th>เมื่อไหร่ใช้</th><th>ทดสอบใน Wokwi</th></tr>
+      <tr><td>MQTT</td><td>อยู่คนละที่ / ผ่านมือถือ 4G</td><td>ใช้ได้เลย (Wokwi-GUEST ออกเน็ตได้)</td></tr>
+      <tr><td>WebSocket</td><td>อยู่ WiFi เดียวกัน หน่วงต่ำสุด</td><td>VS Code: ws://localhost:8181</td></tr>
+      <tr><td>Serial</td><td>debug / ไม่มี WiFi</td><td>Serial Monitor ของ Wokwi</td></tr>
+    </table>
+    <div class="warn"><b>ความปลอดภัย:</b> broker สาธารณะ (broker.hivemq.com) ใครรู้ topic ก็สั่งแขนได้ ใช้ทดสอบเท่านั้น งานจริงใช้ broker ส่วนตัวที่มี username/password + TLS และมีคนเฝ้า E-STOP เสมอ</div>
+  </div>
+</div>
+
+<div id="wiring" class="modal" role="dialog" aria-modal="true" aria-labelledby="wireTitle">
+  <div class="sheet wiring">
+    <div class="shead">
+      <div><h2 id="wireTitle">แผนผังวงจรต่อสาย</h2>
+        <p>แขนจริง: ESP32 + PCA9685 + ไฟ servo แยก · ใน Wokwi ต่อ servo ตรงที่ GPIO</p></div>
+      <button class="b" data-close aria-label="ปิด">✕</button>
+    </div>
+    <div class="legend">
+      <span><i style="background:#ff9f0a"></i>3V3 ลอจิก</span><span><i style="background:#ff453a"></i>5–6V servo</span>
+      <span><i style="background:var(--text)"></i>GND</span><span><i style="background:#0a84ff"></i>SDA</span>
+      <span><i style="background:#30d158"></i>SCL</span><span><i style="background:#bf5af2"></i>PWM</span><span><i style="background:#64d2ff"></i>E-STOP sense</span>
+    </div>
+    <svg viewBox="0 0 720 470" role="img" aria-label="แผนผังต่อสาย ESP32, PCA9685, OLED, E-STOP, Power supply และ Servo 6 ตัว">
+  <!-- ESP32 -->
+  <rect class="blk" x="20" y="40" width="150" height="190" rx="14"/>
+  <text class="t" x="34" y="64">ESP32 DevKit</text><text class="s" x="34" y="82">WiFi · USB 5V</text>
+  <text class="pin" x="162" y="74" text-anchor="end">3V3</text><text class="pin" x="162" y="99" text-anchor="end">GND</text>
+  <text class="pin" x="162" y="124" text-anchor="end">GPIO21 SDA</text><text class="pin" x="162" y="149" text-anchor="end">GPIO22 SCL</text>
+  <text class="pin" x="162" y="174" text-anchor="end">GPIO4</text>
+  <!-- OLED -->
+  <rect class="blk" x="260" y="20" width="170" height="92" rx="12"/>
+  <text class="t" x="360" y="50" text-anchor="middle">OLED SSD1306</text><text class="s" x="360" y="68" text-anchor="middle">I2C 0x3C</text>
+  <text class="pin" x="268" y="39">VCC</text><text class="pin" x="268" y="59">GND</text>
+  <text class="pin" x="268" y="79">SCL</text><text class="pin" x="268" y="99">SDA</text>
+  <!-- PCA9685 -->
+  <rect class="blk" x="260" y="130" width="160" height="200" rx="14"/>
+  <text class="t" x="340" y="268" text-anchor="middle">PCA9685</text><text class="s" x="340" y="286" text-anchor="middle">16-ch PWM · I2C 0x40</text>
+  <text class="pin" x="268" y="154">VCC</text><text class="pin" x="268" y="179">GND</text>
+  <text class="pin" x="268" y="204">SDA</text><text class="pin" x="268" y="229">SCL</text>
+  <text class="pin" x="320" y="322" text-anchor="middle">V+</text><text class="pin" x="380" y="322" text-anchor="middle">GND</text>
+  <!-- PSU -->
+  <rect class="blk" x="20" y="290" width="150" height="90" rx="14"/>
+  <text class="t" x="34" y="314">Power Supply</text><text class="s" x="34" y="332">5–6V 10A (servo)</text>
+  <text class="pin" x="162" y="319" text-anchor="end">+</text><text class="pin" x="162" y="359" text-anchor="end">−</text>
+  <!-- E-STOP -->
+  <rect class="blk" x="230" y="404" width="70" height="34" rx="10"/>
+  <text class="t" x="265" y="426" text-anchor="middle" style="fill:#ff453a">E-STOP</text>
+
+  <!-- I2C + logic power (3V3) -->
+  <path class="w c-3v3" d="M170 70H205V35H260M205 70V150H260"/>
+  <path class="w c-gnd" d="M170 95H215V55H260M215 95V175H260M215 175V450"/>
+  <path class="w c-sda" d="M170 120H225V95H260M225 120V200H260"/>
+  <path class="w c-scl" d="M170 145H235V75H260M235 145V225H260"/>
+  <!-- servo power through E-STOP + capacitor -->
+  <path class="w c-pwr" d="M170 315H185V420H230M300 420H320V330M320 365H350V384"/>
+  <path class="w c-gnd" d="M170 355H175V450H380V330M350 394V450"/>
+  <path class="w c-gnd" d="M338 384H362M338 394H362"/>
+  <text class="s" x="368" y="393">C 1000µF</text>
+  <!-- E-STOP sense -->
+  <path class="w c-sig" d="M170 170H195V395H265V404"/>
+  <g class="dot"><circle cx="205" cy="70" r="3.5" fill="#ff9f0a"/><circle cx="215" cy="95" r="3.5" fill="currentColor"/>
+    <circle cx="225" cy="120" r="3.5" fill="#0a84ff"/><circle cx="235" cy="145" r="3.5" fill="#30d158"/>
+    <circle cx="320" cy="365" r="3.5" fill="#ff453a"/><circle cx="215" cy="450" r="3.5" fill="currentColor"/><circle cx="350" cy="450" r="3.5" fill="currentColor"/></g>
+  <text class="s" x="232" y="462">GND ร่วม (ESP32 + PSU + PCA9685)</text>
+  <text class="pin" x="414" y="154" text-anchor="end">CH0</text><path class="w c-pwm" d="M420 145H520"/><path class="w c-pwr" d="M420 150H520"/><path class="w c-gnd" d="M420 155H520"/><rect class="blk" x="520" y="138" width="180" height="24" rx="8"/><text class="pin" x="532" y="154">J1 ฐานหมุน</text><text class="s" x="690" y="154" text-anchor="end">MG996R</text><text class="pin" x="414" y="184" text-anchor="end">CH1</text><path class="w c-pwm" d="M420 175H520"/><path class="w c-pwr" d="M420 180H520"/><path class="w c-gnd" d="M420 185H520"/><rect class="blk" x="520" y="168" width="180" height="24" rx="8"/><text class="pin" x="532" y="184">J2 ไหล่</text><text class="s" x="690" y="184" text-anchor="end">MG996R</text><text class="pin" x="414" y="214" text-anchor="end">CH2</text><path class="w c-pwm" d="M420 205H520"/><path class="w c-pwr" d="M420 210H520"/><path class="w c-gnd" d="M420 215H520"/><rect class="blk" x="520" y="198" width="180" height="24" rx="8"/><text class="pin" x="532" y="214">J3 ศอก</text><text class="s" x="690" y="214" text-anchor="end">MG996R</text><text class="pin" x="414" y="244" text-anchor="end">CH3</text><path class="w c-pwm" d="M420 235H520"/><path class="w c-pwr" d="M420 240H520"/><path class="w c-gnd" d="M420 245H520"/><rect class="blk" x="520" y="228" width="180" height="24" rx="8"/><text class="pin" x="532" y="244">J4 ข้อมือก้ม-เงย</text><text class="s" x="690" y="244" text-anchor="end">MG996R</text><text class="pin" x="414" y="274" text-anchor="end">CH4</text><path class="w c-pwm" d="M420 265H520"/><path class="w c-pwr" d="M420 270H520"/><path class="w c-gnd" d="M420 275H520"/><rect class="blk" x="520" y="258" width="180" height="24" rx="8"/><text class="pin" x="532" y="274">J5 ข้อมือหมุน</text><text class="s" x="690" y="274" text-anchor="end">MG996R</text><text class="pin" x="414" y="304" text-anchor="end">CH5</text><path class="w c-pwm" d="M420 295H520"/><path class="w c-pwr" d="M420 300H520"/><path class="w c-gnd" d="M420 305H520"/><rect class="blk" x="520" y="288" width="180" height="24" rx="8"/><text class="pin" x="532" y="304">J6 กริปเปอร์</text><text class="s" x="690" y="304" text-anchor="end">MG996R</text>
+  <text class="s" x="520" y="345">สาย servo: ม่วง = สัญญาณ · แดง = V+ · ดำ = GND</text>
+</svg>
+    <table class="pins">
+      <tr><th>ขา ESP32</th><th>ต่อไปที่</th><th>หมายเหตุ</th></tr>
+      <tr><td>3V3</td><td>PCA9685 VCC, OLED VCC</td><td>ไฟลอจิกเท่านั้น ห้ามจ่าย servo</td></tr>
+      <tr><td>GND</td><td>PCA9685 GND, OLED GND, PSU −</td><td>ต้องต่อร่วมกันทั้งหมด</td></tr>
+      <tr><td>GPIO21</td><td>SDA (PCA9685 + OLED)</td><td>บัส I2C เดียวกัน</td></tr>
+      <tr><td>GPIO22</td><td>SCL (PCA9685 + OLED)</td><td></td></tr>
+      <tr><td>GPIO4</td><td>E-STOP (หน้าสัมผัส NO → GND)</td><td>INPUT_PULLUP · กด = สลับหยุด</td></tr>
+      <tr><td>PSU +</td><td>E-STOP (NC) → PCA9685 V+</td><td>กดแล้วตัดไฟ servo ทันที</td></tr>
+      <tr><td>CH0–CH5</td><td>Servo J1–J6</td><td>Wokwi: GPIO 13, 12, 14, 27, 26, 25</td></tr>
+    </table>
+    <div class="warn"><b>ระวัง:</b> อย่าจ่ายไฟ servo จาก USB หรือขา 5V ของบอร์ด MG996R ดึงกระแสกระชากได้ ~2.5A ต่อตัว ใช้ PSU แยก 5–6V ≥10A ใส่ C 1000µF คร่อม V+/GND ใกล้บอร์ด PCA9685</div>
+  </div>
+</div>
+
+<div id="diagram" class="modal" role="dialog" aria-modal="true" aria-labelledby="diagTitle">
+  <div class="sheet">
+    <div class="shead">
+      <div><h2 id="diagTitle">เส้นทางคำสั่ง: จากหน้าจอถึงแขนกล</h2>
+        <p>หน้าเว็บนี้กับ firmware ESP32 ใช้ JSON ชุดเดียวกัน (Digital Twin)</p></div>
+      <button class="b" id="diagClose" aria-label="ปิด">✕</button>
+    </div>
+    <div class="flow">
+      <div class="step"><span class="n">1</span><div><b>ผู้ใช้สั่งงาน</b><span>Slider ข้อต่อ · ลากเป้าหมาย IK · เล่นท่า (Teach) · Console · มือถือ</span></div><span class="where w-ui">Browser</span></div>
+      <div class="arrow">สร้างคำสั่ง</div>
+      <div class="step"><span class="n">2</span><div><b>คำสั่ง JSON</b><span><code>{"j":[90,90,135,135,90,80]}</code> · <code>{"ik":[x,y,z,pitch]}</code> · <code>{"grip":110}</code> · <code>{"home":1}</code></span></div><span class="where w-ui">Browser</span></div>
+      <div class="arrow">ส่งออก (throttle 50 ms)</div>
+      <div class="pair">
+        <div class="step"><span class="n">3a</span><div><b>WebSocket (WiFi)</b><span><code>ws://IP:81</code> · Wokwi: <code>ws://localhost:8181</code></span></div></div>
+        <div class="step"><span class="n">3b</span><div><b>Serial (USB)</b><span>115200 baud · 1 บรรทัด = 1 คำสั่ง</span></div></div>
+        <div class="step"><span class="n">3c</span><div><b>MQTT (อินเทอร์เน็ต)</b><span>publish <code>&lt;prefix&gt;/cmd</code> → broker → ESP32 subscribe</span></div></div>
+      </div>
+      <div class="arrow">รับที่ ESP32</div>
+      <div class="step"><span class="n">4</span><div><b>handleCommand()</b><span>แปลง JSON · เช็ก E-STOP · จำกัดมุมตาม joint limit</span></div><span class="where w-fw">Firmware</span></div>
+      <div class="arrow">ถ้าเป็นคำสั่ง ik</div>
+      <div class="step"><span class="n">5</span><div><b>Inverse Kinematics — autoIK()</b><span>พิกัด (x, y, z, pitch) → มุม servo J1–J4 · เอื้อมไม่ถึงจะตอบ <code>{"err":"unreachable"}</code></span></div><span class="where w-fw">Firmware</span></div>
+      <div class="arrow"></div>
+      <div class="step"><span class="n">6</span><div><b>setTargets() — Sync move</b><span>คำนวณความเร็วของแต่ละข้อให้ทุกข้อถึงเป้าหมายพร้อมกัน</span></div><span class="where w-fw">Firmware</span></div>
+      <div class="arrow"></div>
+      <div class="step"><span class="n">7</span><div><b>Motion loop 50 Hz</b><span>ขยับมุมปัจจุบันเข้าหาเป้าทีละนิดตามความเร็ว (°/s) → เคลื่อนที่นุ่ม ไม่กระตุก</span></div><span class="where w-fw">Firmware</span></div>
+      <div class="arrow"></div>
+      <div class="step"><span class="n">8</span><div><b>writeServo()</b><span>มุม 0–180° → pulse 500–2500 µs · Wokwi: GPIO PWM · ของจริง: PCA9685 ผ่าน I2C</span></div><span class="where w-hw">Driver</span></div>
+      <div class="arrow">PWM 50 Hz + ไฟเลี้ยง 5–6 V แยก</div>
+      <div class="step"><span class="n">9</span><div><b>Servo J1–J6 → แขนกลเคลื่อนที่</b><span>ฐาน · ไหล่ · ศอก · ข้อมือก้ม-เงย · ข้อมือหมุน · กริปเปอร์</span></div><span class="where w-hw">Hardware</span></div>
+    </div>
+    <div class="feedback">
+      <b>↑ ข้อมูลย้อนกลับ (Feedback)</b>
+      <ul>
+        <li><code>{"state":[…],"estop":false}</code> ส่งกลับทาง WebSocket 10 ครั้ง/วินาที</li>
+        <li>จอ OLED แสดง IP, มุมทุกข้อ, จำนวน client ทุก 200 ms</li>
+        <li>ปุ่ม E-STOP (GPIO 4) หยุดแขนทันที และไม่รับคำสั่งเคลื่อนที่จนกว่าจะกดอีกครั้ง</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { TransformControls } from 'three/addons/controls/TransformControls.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
+
+const $ = s => document.querySelector(s);
+const rad = d => d * Math.PI / 180, deg = r => r * 180 / Math.PI;
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+
+// ---------------------------------------------------------------------------
+// Robot config (mm, servo degrees) — ใช้ค่าชุดเดียวกับ firmware จริง
+// มุมข้อต่อ = (มุม servo - offset) * dir   → ปรับ offset/dir ตอน calibrate แขนจริง
+// ---------------------------------------------------------------------------
+const L = { base: 95, upper: 120, fore: 115, tool: 110 };
+const TCP = L.tool - 15;                       // จุดกึ่งกลางนิ้วกริปเปอร์
+const JOINTS = [
+  { key: 'J1', name: 'ฐานหมุน (Base)',        min: 0,  max: 180, home: 90,  offset: 90, dir: 1 },
+  { key: 'J2', name: 'ไหล่ (Shoulder)',        min: 15, max: 165, home: 90,  offset: 90, dir: 1 },
+  { key: 'J3', name: 'ศอก (Elbow)',            min: 0,  max: 180, home: 135, offset: 45, dir: 1 },
+  { key: 'J4', name: 'ข้อมือก้ม-เงย (Pitch)',   min: 0,  max: 180, home: 135, offset: 90, dir: 1 },
+  { key: 'J5', name: 'ข้อมือหมุน (Roll)',       min: 0,  max: 180, home: 90,  offset: 90, dir: 1 },
+  { key: 'J6', name: 'กริปเปอร์ (Gripper)',     min: 10, max: 120, home: 80,  offset: 0,  dir: 1 },
+];
+const GRIP_MIN = 10, GRIP_MAX = 120, GRIP_OPEN_MM = 60, CUBE = 30;
+const openingOf = s => clamp((s - GRIP_MIN) / (GRIP_MAX - GRIP_MIN), 0, 1) * GRIP_OPEN_MM;
+const servoForOpening = o => GRIP_MIN + clamp(o / GRIP_OPEN_MM, 0, 1) * (GRIP_MAX - GRIP_MIN);
+const S_CUBE = servoForOpening(CUBE);
+const theta = (i, s) => (s - JOINTS[i].offset) * JOINTS[i].dir;
+const servoOf = (i, t) => JOINTS[i].offset + t / JOINTS[i].dir;
+
+const HOME = JOINTS.map(j => j.home);
+const CANDLE = [90, 90, 45, 90, 90, 80];
+const cur = HOME.slice(), tgt = HOME.slice();
+const moveSpeed = new Array(6).fill(90);
+let speed = 90;
+
+// robot frame (X fwd, Y left, Z up) <-> three.js world (Y up)
+const worldFromRobot = (x, y, z) => new THREE.Vector3(x, z, -y);
+const robotFromWorld = v => ({ x: v.x, y: -v.z, z: v.y });
+
+// ---------------------------------------------------------------------------
+// Scene
+// ---------------------------------------------------------------------------
+const view = $('#view');
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+view.prepend(renderer.domElement);
+
+const scene = new THREE.Scene();
+scene.environment = new THREE.PMREMGenerator(renderer).fromScene(new RoomEnvironment(), 0.04).texture;
+const camera = new THREE.PerspectiveCamera(36, 1, 1, 6000);
+camera.position.set(600, 420, 620);
+const orbit = new OrbitControls(camera, renderer.domElement);
+orbit.target.set(60, 150, 0);
+orbit.enableDamping = true;
+orbit.update();
+
+scene.add(new THREE.HemisphereLight(0xffffff, 0xb4bcc8, 0.5));
+const sun = new THREE.DirectionalLight(0xffffff, 1.4);
+sun.position.set(250, 700, 300);
+sun.castShadow = true;
+sun.shadow.mapSize.set(2048, 2048);
+sun.shadow.bias = -0.0004;
+Object.assign(sun.shadow.camera, { left: -450, right: 450, top: 450, bottom: -450, near: 10, far: 1600 });
+scene.add(sun);
+
+const floorMat = new THREE.MeshStandardMaterial({ roughness: 1 });
+const floor = new THREE.Mesh(new THREE.PlaneGeometry(6000, 6000), floorMat);
+floor.rotation.x = -Math.PI / 2;
+floor.receiveShadow = true;
+scene.add(floor);
+let grid = null;
+function applyTheme() {
+  const bg = new THREE.Color(css('--scene-bg'));
+  scene.background = bg;
+  scene.fog = new THREE.Fog(bg, 900, 2600);
+  floorMat.color.set(css('--floor'));
+  if (grid) { scene.remove(grid); grid.geometry.dispose(); }
+  grid = new THREE.GridHelper(1200, 24, css('--grid1'), css('--grid2'));
+  grid.material.transparent = true;
+  grid.material.opacity = 0.6;
+  grid.position.y = 0.3;
+  scene.add(grid);
+}
+applyTheme();
+
+// axis legend: X red (forward), Y green (left), Z blue (up)
+const axOrigin = worldFromRobot(-140, -160, 1);
+[[1, 0, 0, 0xff453a], [0, 0, -1, 0x30d158], [0, 1, 0, 0x0a84ff]].forEach(([x, y, z, c]) =>
+  scene.add(new THREE.ArrowHelper(new THREE.Vector3(x, y, z), axOrigin, 60, c, 14, 8)));
+
+// ---------------------------------------------------------------------------
+// Arm model — white cobot style (actuator housings + capsule links)
+// ---------------------------------------------------------------------------
+const M = {
+  white: new THREE.MeshPhysicalMaterial({ color: 0xf5f5f7, roughness: 0.3, clearcoat: 0.8, clearcoatRoughness: 0.2 }),
+  dark:  new THREE.MeshPhysicalMaterial({ color: 0x1c1c1e, roughness: 0.4, clearcoat: 0.5 }),
+  metal: new THREE.MeshStandardMaterial({ color: 0xc9cbd0, roughness: 0.2, metalness: 1 }),
+  led:   new THREE.MeshStandardMaterial({ color: 0x0a84ff, emissive: 0x0a84ff, emissiveIntensity: 1.8 }),
+  pad:   new THREE.MeshStandardMaterial({ color: 0x2c2c2e, roughness: 0.95 }),
+};
+const box = (w, h, d) => new THREE.BoxGeometry(w, h, d);
+const rbox = (w, h, d, r = 4) => new RoundedBoxGeometry(w, h, d, 4, r);
+const cyl = (r, h, rt = r) => new THREE.CylinderGeometry(rt, r, h, 64);
+const capsule = (r, len) => new THREE.CapsuleGeometry(r, len, 12, 48);
+const ring = (r, t = 1.4) => new THREE.TorusGeometry(r, t, 12, 64);
+function part(geo, mat, parent, x = 0, y = 0, z = 0) {
+  const m = new THREE.Mesh(geo, mat);
+  m.position.set(x, y, z);
+  m.castShadow = m.receiveShadow = true;
+  parent.add(m);
+  return m;
+}
+// actuator housing whose axis is the local Z (pitch joints)
+function actuator(parent, r, len) {
+  part(cyl(r, len), M.white, parent).rotation.x = Math.PI / 2;
+  for (const s of [-1, 1]) part(cyl(r * 0.84, 3), M.dark, parent, 0, 0, s * (len / 2 + 1.5)).rotation.x = Math.PI / 2;
+  part(ring(r * 0.62), M.led, parent, 0, 0, len / 2 + 3.4).castShadow = false;
+}
+
+// base
+part(cyl(80, 6, 76), M.dark, scene, 0, 3, 0);
+part(cyl(64, 40, 58), M.white, scene, 0, 26, 0);
+part(ring(59, 1.6), M.led, scene, 0, 44, 0).rotation.x = Math.PI / 2;
+
+const j1 = new THREE.Group(); j1.position.y = 46; scene.add(j1);
+part(cyl(52, 24, 48), M.white, j1, 0, 12, 0);
+part(cyl(49, 2), M.dark, j1, 0, 1, 0);
+
+const j2 = new THREE.Group(); j2.position.y = L.base - 46; j1.add(j2);   // shoulder pivot @ world y = L.base
+actuator(j2, 40, 96);
+part(capsule(25, L.upper - 50), M.white, j2, 0, L.upper / 2, 0);
+
+const j3 = new THREE.Group(); j3.position.y = L.upper; j2.add(j3);
+actuator(j3, 32, 80);
+part(capsule(19, L.fore - 40), M.white, j3, 0, L.fore / 2, 0);
+
+const j4 = new THREE.Group(); j4.position.y = L.fore; j3.add(j4);
+actuator(j4, 24, 60);
+
+const j5 = new THREE.Group(); j4.add(j5);
+part(cyl(21, 32), M.white, j5, 0, 30, 0);
+part(ring(21, 1.5), M.led, j5, 0, 46, 0).rotation.x = Math.PI / 2;
+part(cyl(18, 6), M.metal, j5, 0, 50, 0);
+part(rbox(78, 16, 30, 6), M.dark, j5, 0, L.tool - 51, 0);
+const fingerL = part(rbox(9, 45, 18, 3), M.white, j5, 0, L.tool - 22.5, 0);
+const fingerR = part(rbox(9, 45, 18, 3), M.white, j5, 0, L.tool - 22.5, 0);
+part(box(2, 30, 14), M.pad, fingerL, 4.6, 5, 0);
+part(box(2, 30, 14), M.pad, fingerR, -4.6, 5, 0);
+const tcp = new THREE.Object3D(); tcp.position.y = TCP; j5.add(tcp);
+const tip = new THREE.Object3D(); tip.position.y = L.tool; j5.add(tip);
+
+function applyPose(p) {
+  j1.rotation.y = rad(theta(0, p[0]));
+  j2.rotation.z = -rad(theta(1, p[1]));
+  j3.rotation.z = -rad(theta(2, p[2]));
+  j4.rotation.z = -rad(theta(3, p[3]));
+  j5.rotation.y = rad(theta(4, p[4]));
+  const o = openingOf(p[5]);
+  fingerL.position.x = -(o / 2 + 4);
+  fingerR.position.x = o / 2 + 4;
+  scene.updateMatrixWorld();
+}
+
+// ---------------------------------------------------------------------------
+// Objects: cubes + place pad
+// ---------------------------------------------------------------------------
+const PAD = { x: 30, y: 170 };
+const pad = new THREE.Mesh(box(56, 2, 56),
+  new THREE.MeshStandardMaterial({ color: 0x30d158, transparent: true, opacity: 0.35 }));
+pad.position.copy(worldFromRobot(PAD.x, PAD.y, 1));
+pad.receiveShadow = true;
+scene.add(pad);
+
+const CUBE_START = [[160, -100], [190, 0], [140, 90]];
+const cubes = [0xff453a, 0x0a84ff, 0xffd60a].map(color => {
+  const m = part(rbox(CUBE, CUBE, CUBE, 4), new THREE.MeshPhysicalMaterial({ color, roughness: 0.35, clearcoat: 0.6 }), scene);
+  return { m, vy: 0 };
+});
+let held = null;
+function resetCubes() {
+  if (held) { scene.attach(held.m); held = null; }
+  cubes.forEach((c, i) => {
+    c.m.position.copy(worldFromRobot(CUBE_START[i][0], CUBE_START[i][1], CUBE / 2));
+    c.m.rotation.set(0, 0, 0);
+    c.vy = 0;
+  });
+}
+resetCubes();
+
+// ---------------------------------------------------------------------------
+// Inverse kinematics (analytic: yaw + planar 3-link, elbow-up)
+// ---------------------------------------------------------------------------
+function solveIK(x, y, z, pitch) {
+  let yaw = deg(Math.atan2(y, x));
+  let r = Math.hypot(x, y);
+  if (yaw < -90 || yaw > 90) { yaw += yaw > 0 ? -180 : 180; r = -r; }   // reach behind
+  const phi4 = rad(r < 0 ? pitch - 90 : 90 - pitch);  // tool direction from vertical (mirrored when reaching behind)
+  const rw = r - TCP * Math.sin(phi4);
+  const zw = z - L.base - TCP * Math.cos(phi4);
+  const c = (rw * rw + zw * zw - L.upper ** 2 - L.fore ** 2) / (2 * L.upper * L.fore);
+  if (Math.abs(c) > 1) return null;
+  // try elbow-up first (bend direction depends on which side we reach), then the other branch
+  for (const t3 of r < 0 ? [-Math.acos(c), Math.acos(c)] : [Math.acos(c), -Math.acos(c)]) {
+    const t2 = Math.atan2(rw, zw) - Math.atan2(L.fore * Math.sin(t3), L.upper + L.fore * Math.cos(t3));
+    let t4 = deg(phi4 - t2 - t3);
+    t4 = ((t4 + 180) % 360 + 360) % 360 - 180;
+    const servos = [yaw, deg(t2), deg(t3), t4].map((t, i) => servoOf(i, t));
+    if (servos.every((s, i) => s >= JOINTS[i].min - 1e-6 && s <= JOINTS[i].max + 1e-6))
+      return { servos: servos.map(v => Math.round(v * 10) / 10), pitch };
+  }
+  return null;
+}
+function autoIK(x, y, z, pitch, auto = $('#autoPitch').checked) {
+  if (!auto) return solveIK(x, y, z, pitch);
+  for (let d = 0; d <= 180; d += 5) {
+    for (const p of d ? [pitch + d, pitch - d] : [pitch]) {
+      if (p < -90 || p > 90) continue;
+      const r = solveIK(x, y, z, p);
+      if (r) return r;
+    }
+  }
+  return null;
+}
+
+// ---------------------------------------------------------------------------
+// Targets, motion, grasp physics
+// ---------------------------------------------------------------------------
+function setTargets(arr, { send = true } = {}) {
+  arr.forEach((v, i) => { if (Number.isFinite(v)) tgt[i] = clamp(v, JOINTS[i].min, JOINTS[i].max); });
+  // synchronized move: every arm joint arrives at the same time
+  const d = tgt.map((t, i) => Math.abs(t - cur[i]));
+  const mx = Math.max(...d.slice(0, 5));
+  for (let i = 0; i < 5; i++) moveSpeed[i] = mx > 0.01 ? Math.max(1, speed * d[i] / mx) : speed;
+  moveSpeed[5] = speed * 1.5;
+  syncSliders();
+  if (send) queueSend();
+}
+const gripGoal = () => held ? Math.max(tgt[5], S_CUBE) : tgt[5];
+const reached = () => tgt.every((t, i) => Math.abs((i === 5 ? gripGoal() : t) - cur[i]) < 0.5);
+
+const tmp = new THREE.Vector3(), tmp2 = new THREE.Vector3();
+function step(dt) {
+  const before = cur[5];
+  for (let i = 0; i < 6; i++) {
+    const goal = i === 5 ? gripGoal() : tgt[i];
+    const d = goal - cur[i], m = moveSpeed[i] * dt;
+    cur[i] += Math.abs(d) <= m ? d : Math.sign(d) * m;
+  }
+  applyPose(cur);
+  // grasp: fingers close past cube width while a cube sits between them
+  if (!held && before > S_CUBE && cur[5] <= S_CUBE) {
+    tcp.getWorldPosition(tmp);
+    const c = cubes.find(c => c.m.position.distanceTo(tmp) < 20);
+    if (c) { held = c; cur[5] = S_CUBE; applyPose(cur); j5.attach(c.m); }
+  }
+  // release
+  if (held && openingOf(cur[5]) > CUBE + 3) {
+    scene.attach(held.m);
+    const e = new THREE.Euler().setFromQuaternion(held.m.quaternion, 'YXZ');
+    held.m.rotation.set(0, e.y, 0);
+    held.vy = 0;
+    held = null;
+  }
+}
+function physics(dt) {
+  for (const c of cubes) {
+    if (c === held) continue;
+    const p = c.m.position;
+    let support = CUBE / 2;
+    for (const o of cubes) {
+      if (o === c || o === held) continue;
+      const q = o.m.position;
+      if (Math.abs(q.x - p.x) < CUBE * 0.9 && Math.abs(q.z - p.z) < CUBE * 0.9 && q.y < p.y - 1)
+        support = Math.max(support, q.y + CUBE);
+    }
+    if (p.y > support + 0.01) {
+      c.vy -= 9810 * dt;
+      p.y = Math.max(support, p.y + c.vy * dt);
+      if (p.y === support) c.vy = 0;
+    } else { p.y = support; c.vy = 0; }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// UI: joints tab
+// ---------------------------------------------------------------------------
+const jointUI = JOINTS.map((j, i) => {
+  const el = document.createElement('div');
+  el.className = 'field';
+  el.innerHTML = `<div class="top"><span class="name"><span class="key">${j.key}</span>${j.name}</span><output></output></div>
+    <input type="range" min="${j.min}" max="${j.max}" step="1" value="${j.home}">
+    <div class="sub"><span>${j.min}°</span><span>${j.max}°</span></div>`;
+  $('#joints').append(el);
+  const input = el.querySelector('input'), out = el.querySelector('output');
+  input.addEventListener('input', () => { stopPlayback(); setTargets(Object.assign(tgt.slice(), { [i]: +input.value })); });
+  return { input, out };
+});
+function syncSliders() { jointUI.forEach((u, i) => { u.input.value = tgt[i]; }); }
+$('#speed').addEventListener('input', e => { speed = +e.target.value; $('#speedOut').textContent = `${speed} °/s`; setTargets(tgt, { send: false }); });
+$('#homeBtn').onclick = () => { stopPlayback(); setTargets(HOME); };
+$('#candleBtn').onclick = () => { stopPlayback(); setTargets(CANDLE); };
+$('#stopBtn').onclick = () => runCommand({ stop: 1 });
+
+// ---------------------------------------------------------------------------
+// UI: IK tab + draggable target
+// ---------------------------------------------------------------------------
+const IKF = [
+  { k: 'x', label: 'X · ไปข้างหน้า', min: -300, max: 300, u: 'mm' },
+  { k: 'y', label: 'Y · ไปทางซ้าย', min: -300, max: 300, u: 'mm' },
+  { k: 'z', label: 'Z · ความสูง', min: 0, max: 400, u: 'mm' },
+  { k: 'p', label: 'Pitch (−90 = ชี้ลง)', min: -90, max: 90, u: '°' },
+];
+const ik = {};
+for (const f of IKF) {
+  const el = document.createElement('div');
+  el.className = 'field';
+  el.innerHTML = `<div class="top"><span class="name">${f.label}</span><output></output></div>
+    <input type="range" min="${f.min}" max="${f.max}" step="1">`;
+  $('#ikFields').append(el);
+  const input = el.querySelector('input'), out = el.querySelector('output');
+  input.addEventListener('input', () => {
+    stopPlayback();
+    out.textContent = `${input.value} ${f.u}`;
+    goIK(+ik.x.input.value, +ik.y.input.value, +ik.z.input.value, +ik.p.input.value);
+  });
+  ik[f.k] = { input, out, u: f.u };
+}
+function setIKFields(v) {
+  for (const k in v) { ik[k].input.value = Math.round(v[k]); ik[k].out.textContent = `${Math.round(v[k])} ${ik[k].u}`; }
+}
+
+const markerMat = new THREE.MeshStandardMaterial({ color: 0x0a84ff, transparent: true, opacity: 0.85 });
+const marker = new THREE.Mesh(new THREE.SphereGeometry(9, 24, 16), markerMat);
+scene.add(marker);
+const tc = new TransformControls(camera, renderer.domElement);
+tc.setSize(0.75);
+tc.attach(marker);
+scene.add(tc);
+tc.addEventListener('dragging-changed', e => { orbit.enabled = !e.value; if (e.value) stopPlayback(); });
+tc.addEventListener('objectChange', () => {
+  const p = robotFromWorld(marker.position);
+  goIK(p.x, p.y, p.z, +ik.p.input.value, { moveMarker: false });
+});
+$('#showMarker').addEventListener('change', e => { marker.visible = tc.visible = tc.enabled = e.target.checked; });
+
+function goIK(x, y, z, pitch, { moveMarker = true, send = true } = {}) {
+  const res = autoIK(x, y, z, pitch);
+  if (moveMarker) marker.position.copy(worldFromRobot(x, y, z));
+  setIKFields({ x, y, z });
+  markerMat.color.set(res ? 0x0a84ff : 0xef4444);
+  const st = $('#ikStatus');
+  if (res) {
+    setTargets([...res.servos, tgt[4], tgt[5]], { send });
+    st.className = 'status ok';
+    st.textContent = `เอื้อมถึง ✓ pitch ที่ใช้ ${res.pitch}° → [${res.servos.map(Math.round).join(', ')}]`;
+  } else {
+    st.className = 'status bad';
+    st.textContent = 'เอื้อมไม่ถึง ✗ (เกินระยะ หรือมุมเกิน joint limit)';
+  }
+  return res;
+}
+const tcpRobot = () => robotFromWorld(tcp.getWorldPosition(tmp));
+const curPitch = () => {
+  const phi = theta(1, cur[1]) + theta(2, cur[2]) + theta(3, cur[3]);
+  return phi >= 0 ? 90 - phi : 90 + phi;          // pitch relative to the side the tool points
+};
+function syncMarkerToTCP() {
+  const r = tcpRobot();
+  marker.position.copy(worldFromRobot(r.x, r.y, r.z));
+  markerMat.color.set(0x0a84ff);
+  setIKFields({ ...r, p: clamp(curPitch(), -90, 90) });
+}
+$('#syncMarker').onclick = syncMarkerToTCP;
+
+// ---------------------------------------------------------------------------
+// Teach & playback
+// ---------------------------------------------------------------------------
+const STORE = 'robotArmSim.program';
+let program = [];
+try { program = JSON.parse(localStorage.getItem(STORE) || '[]').filter(validPose); } catch { program = []; }
+let playing = false, playIdx = 0, waitUntil = 0;
+const delayMs = () => +$('#delay').value;
+function validPose(p) { return p && Array.isArray(p.j) && p.j.length === 6 && p.j.every(Number.isFinite); }
+
+function renderProgram() {
+  const list = $('#prog');
+  list.innerHTML = '';
+  program.forEach((p, i) => {
+    const li = document.createElement('li');
+    if (playing && i === playIdx) li.className = 'active';
+    li.innerHTML = `<span class="idx">${i + 1}</span><code>${p.j.map(v => Math.round(v)).join(' · ')}</code>
+      <button class="mini" data-go="${i}">ไป</button><button class="mini" data-del="${i}">✕</button>`;
+    list.append(li);
+  });
+  try { localStorage.setItem(STORE, JSON.stringify(program)); } catch {}
+}
+$('#prog').addEventListener('click', e => {
+  const go = e.target.dataset.go, del = e.target.dataset.del;
+  if (go !== undefined) { stopPlayback(); setTargets(program[+go].j); }
+  if (del !== undefined) { program.splice(+del, 1); renderProgram(); }
+});
+$('#recBtn').onclick = () => { program.push({ j: tgt.map(v => Math.round(v * 10) / 10) }); renderProgram(); };
+$('#clearBtn').onclick = () => { stopPlayback(); program = []; renderProgram(); };
+$('#playBtn').onclick = startPlayback;
+$('#pauseBtn').onclick = stopPlayback;
+$('#delay').addEventListener('input', e => { $('#delayOut').textContent = `${e.target.value} ms`; });
+
+function startPlayback() {
+  if (!program.length) return;
+  playing = true; playIdx = 0; waitUntil = 0;
+  setTargets(program[0].j);
+  renderProgram();
+}
+function stopPlayback() { if (playing) { playing = false; renderProgram(); } }
+function updatePlayback(now) {
+  if (!playing) return;
+  if (!waitUntil) { if (reached()) waitUntil = now + delayMs(); return; }
+  if (now < waitUntil) return;
+  waitUntil = 0;
+  if (++playIdx >= program.length) {
+    if (!$('#loop').checked) { playing = false; renderProgram(); return; }
+    playIdx = 0;
+  }
+  setTargets(program[playIdx].j);
+  renderProgram();
+}
+
+$('#exportBtn').onclick = () => {
+  const txt = '[\n' + program.map(p => '  ' + JSON.stringify({ j: p.j })).join(',\n') + '\n]';
+  $('#io').value = txt;
+  navigator.clipboard?.writeText(txt).catch(() => {});
+};
+$('#importBtn').onclick = () => {
+  try {
+    const arr = JSON.parse($('#io').value);
+    if (!Array.isArray(arr) || !arr.every(validPose)) throw new Error('ต้องเป็น [{"j":[6 ค่า]}, ...]');
+    stopPlayback(); program = arr.map(p => ({ j: p.j })); renderProgram();
+  } catch (err) { alert('Import ไม่สำเร็จ: ' + err.message); }
+};
+
+// Demo: pick every cube not on the pad and stack it there
+function buildDemo(targets) {
+  const OPEN = servoForOpening(50), CLOSE = servoForOpening(15);
+  const poses = [{ j: [...HOME.slice(0, 5), OPEN] }];
+  const pose = (x, y, z, grip) => {
+    const r = autoIK(x, y, z, -90, true);
+    if (!r) return null;
+    const yaw = theta(0, r.servos[0]);
+    const roll = ((yaw + 45) % 90 + 90) % 90 - 45;        // align fingers with cube faces
+    return { j: [...r.servos, servoOf(4, roll), grip] };
+  };
+  const onPad = c => { const p = robotFromWorld(c.m.position); return Math.hypot(p.x - PAD.x, p.y - PAD.y) < 20; };
+  let level = cubes.filter(onPad).length;
+  for (const p of targets ?? cubes.filter(c => !onPad(c) && c !== held).map(c => robotFromWorld(c.m.position))) {
+    const placeZ = CUBE / 2 + level * CUBE + 2;
+    const hi = Math.max(110, placeZ + 60);
+    const seq = [
+      pose(p.x, p.y, hi, OPEN), pose(p.x, p.y, p.z, OPEN), pose(p.x, p.y, p.z, CLOSE), pose(p.x, p.y, hi, CLOSE),
+      pose(PAD.x, PAD.y, hi, CLOSE), pose(PAD.x, PAD.y, placeZ, CLOSE), pose(PAD.x, PAD.y, placeZ, OPEN), pose(PAD.x, PAD.y, hi, OPEN),
+    ];
+    if (seq.some(s => !s)) continue;          // unreachable cube: skip
+    poses.push(...seq);
+    level++;
+  }
+  poses.push({ j: HOME.slice() });
+  return poses;
+}
+$('#demoBtn').onclick = () => { stopPlayback(); program = buildDemo(); renderProgram(); startPlayback(); };
+$('#resetBtn').onclick = () => { stopPlayback(); resetCubes(); setTargets(HOME); };
+
+// ---------------------------------------------------------------------------
+// Command protocol + WebSocket (same JSON as ESP32 firmware)
+// ---------------------------------------------------------------------------
+function log(text, cls = '') {
+  const d = document.createElement('div');
+  d.className = cls;
+  d.textContent = `${new Date().toLocaleTimeString()}  ${text}`;
+  const box = $('#log');
+  box.prepend(d);
+  while (box.childElementCount > 120) box.lastChild.remove();
+}
+function runCommand(o, { send = true } = {}) {
+  if (Array.isArray(o.j)) { stopPlayback(); setTargets(o.j.map(Number), { send }); }
+  else if (Array.isArray(o.ik)) {
+    stopPlayback();
+    const [x, y, z, p = +ik.p.input.value] = o.ik.map(Number);
+    ik.p.input.value = p; ik.p.out.textContent = `${p} °`;
+    goIK(x, y, z, p, { send });
+  }
+  else if (o.grip !== undefined) setTargets(Object.assign(tgt.slice(), { 5: +o.grip }), { send });
+  else if (o.speed !== undefined) { speed = clamp(+o.speed, 10, 360); $('#speed').value = speed; $('#speedOut').textContent = `${speed} °/s`; }
+  else if (o.home) { stopPlayback(); setTargets(HOME, { send }); }
+  else if (o.stop) { stopPlayback(); setTargets(cur.slice(), { send }); }
+  else throw new Error('ไม่รู้จักคำสั่ง');
+}
+function submitCmd() {
+  const txt = $('#cmd').value.trim();
+  if (!txt) return;
+  try {
+    const o = JSON.parse(txt);
+    runCommand(o, { send: false });
+    log('→ ' + txt, 'out');
+    if (ws?.readyState === 1) ws.send(txt);
+    if (mq?.connected) mq.publish(mqTopic('cmd'), txt);
+  } catch (err) { log('✗ ' + err.message, 'err'); }
+}
+$('#cmdBtn').onclick = submitCmd;
+$('#cmd').addEventListener('keydown', e => { if (e.key === 'Enter') submitCmd(); });
+
+let ws = null, sendTimer = null;
+let mq = null, armOnline = false;
+const mqTopic = leaf => `${$('#mqPrefix').value.trim()}/${leaf}`;
+function queueSend() {
+  if (!$('#mirror').checked || !(ws?.readyState === 1 || mq?.connected) || sendTimer) return;
+  sendTimer = setTimeout(() => {
+    sendTimer = null;
+    const msg = JSON.stringify({ j: tgt.map(v => Math.round(v)) });
+    if (ws?.readyState === 1) ws.send(msg);
+    if (mq?.connected) mq.publish(mqTopic('cmd'), msg);
+    log('→ ' + msg, 'out');
+  }, 50);
+}
+$('#mqBtn').onclick = () => {
+  if (mq) { mq.end(true); mq = null; armOnline = false; $('#mqBtn').textContent = 'เชื่อมต่อ'; log('MQTT ตัดการเชื่อมต่อ', 'err'); return; }
+  if (!window.mqtt) { log('✗ โหลด mqtt.js ไม่ได้', 'err'); return; }
+  const opts = { clientId: 'sim-' + Math.random().toString(16).slice(2, 10), clean: true, reconnectPeriod: 3000 };
+  if ($('#mqUser').value) { opts.username = $('#mqUser').value; opts.password = $('#mqPass').value; }
+  mq = mqtt.connect($('#mqUrl').value.trim(), opts);
+  $('#mqBtn').textContent = 'กำลังต่อ…';
+  mq.on('connect', () => {
+    $('#mqBtn').textContent = 'ตัดการเชื่อมต่อ';
+    log('MQTT เชื่อมต่อแล้ว', 'in');
+    mq.subscribe([mqTopic('state'), mqTopic('status'), mqTopic('reply')]);
+  });
+  mq.on('error', e => log('✗ MQTT ' + e.message, 'err'));
+  mq.on('message', (t, buf) => {
+    const msg = buf.toString();
+    if (t.endsWith('/status')) { armOnline = msg === 'online'; log('แขน: ' + msg, 'in'); }
+    else if (t.endsWith('/reply')) log('← ' + msg, 'in');
+  });
+};
+$('#wsBtn').onclick = () => {
+  if (ws) { ws.close(); return; }
+  try { ws = new WebSocket($('#wsUrl').value.trim()); }
+  catch (err) { log('✗ ' + err.message, 'err'); ws = null; return; }
+  $('#wsBtn').textContent = 'กำลังต่อ…';
+  ws.onopen = () => { log('เชื่อมต่อแล้ว', 'in'); $('#wsBtn').textContent = 'ตัดการเชื่อมต่อ'; queueSend(); };
+  ws.onclose = () => { log('ตัดการเชื่อมต่อ', 'err'); ws = null; $('#wsBtn').textContent = 'เชื่อมต่อ'; };
+  ws.onerror = () => log('✗ เชื่อมต่อไม่ได้', 'err');
+  ws.onmessage = e => {
+    if (!e.data.startsWith('{"state"')) log('← ' + e.data, 'in');
+    try { runCommand(JSON.parse(e.data), { send: false }); } catch {}
+  };
+};
+
+// ---------------------------------------------------------------------------
+// Tabs, theme, HUD, loop
+// ---------------------------------------------------------------------------
+document.querySelectorAll('nav.tabs button').forEach(b => b.onclick = () => {
+  document.querySelectorAll('nav.tabs button').forEach(x => x.classList.toggle('active', x === b));
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.id === 'tab-' + b.dataset.tab));
+});
+const THEMES = [['auto', 'อัตโนมัติ'], ['light', 'สว่าง'], ['dark', 'มืด']];
+let themeIdx = 0;
+$('#themeBtn').onclick = () => {
+  themeIdx = (themeIdx + 1) % THEMES.length;
+  const [k, label] = THEMES[themeIdx];
+  if (k === 'auto') delete document.documentElement.dataset.theme; else document.documentElement.dataset.theme = k;
+  $('#themeBtn').textContent = 'ธีม: ' + label;
+  applyTheme();
+};
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applyTheme);
+
+let hudT = 0;
+function hud(now) {
+  if (now - hudT < 100) return;
+  hudT = now;
+  document.querySelectorAll('input[type=range]').forEach(r =>
+    r.style.setProperty('--p', ((r.value - r.min) / (r.max - r.min) * 100) + '%'));
+  const r = tcpRobot();
+  $('#hx').textContent = r.x.toFixed(0);
+  $('#hy').textContent = r.y.toFixed(0);
+  $('#hz').textContent = r.z.toFixed(0);
+  $('#hp').textContent = curPitch().toFixed(0);
+  jointUI.forEach((u, i) => { u.out.textContent = `${cur[i].toFixed(0)}°`; });
+  const chips = [];
+  if (tip.getWorldPosition(tmp2).y < 1) chips.push(['bad', '⚠ ปลายแขนชนพื้น']);
+  if (held) chips.push(['', '✊ จับกล่องอยู่']);
+  if (playing) chips.push(['', `▶ ท่า ${playIdx + 1}/${program.length}`]);
+  if (ws?.readyState === 1) chips.push(['ok', '● ต่อแขนจริงแล้ว']);
+  if (mq?.connected) chips.push(['ok', armOnline ? '● MQTT · แขน online' : '● MQTT']);
+  $('#chips').innerHTML = chips.map(([c, t]) => `<span class="chip ${c}">${t}</span>`).join('');
+}
+
+function resize() {
+  const w = view.clientWidth, h = view.clientHeight;
+  renderer.setSize(w, h, false);
+  // keep the arm centred in the area left of the floating glass panel
+  const d = innerWidth > 820 ? $('#panel').offsetWidth + 16 : 0;
+  camera.aspect = (w + d) / h;
+  if (d) camera.setViewOffset(w + d, h, d, 0, w, h); else camera.clearViewOffset();
+  camera.updateProjectionMatrix();
+}
+new ResizeObserver(resize).observe(view);
+resize();
+
+applyPose(cur);
+syncMarkerToTCP();
+syncSliders();
+renderProgram();
+
+let last = performance.now();
+renderer.setAnimationLoop(now => {
+  const dt = Math.min(0.05, (now - last) / 1000);
+  last = now;
+  step(dt);
+  physics(dt);
+  updatePlayback(now);
+  hud(now);
+  visionTick(now);
+  orbit.update();
+  renderer.render(scene, camera);
+});
+
+// ---------------------------------------------------------------------------
+// Vision: virtual top camera + color blob detection (same idea as OpenCV HSV)
+// ---------------------------------------------------------------------------
+const VIS = { W: 256, H: 256, SPAN: 500, CX: 100 };
+const topCam = new THREE.OrthographicCamera(-VIS.SPAN / 2, VIS.SPAN / 2, VIS.SPAN / 2, -VIS.SPAN / 2, 10, 1000);
+topCam.position.copy(worldFromRobot(VIS.CX, 0, 600));
+topCam.up.set(1, 0, 0);                                   // image top = robot +X
+topCam.lookAt(worldFromRobot(VIS.CX, 0, 0));
+topCam.layers.set(1);                                     // sees floor, cubes, lights only (no arm)
+floor.layers.enable(1);
+cubes.forEach(c => c.m.layers.enable(1));
+scene.traverse(o => { if (o.isLight) o.layers.enable(1); });
+const camRT = new THREE.WebGLRenderTarget(VIS.W, VIS.H);
+camRT.texture.colorSpace = THREE.SRGBColorSpace;
+const camBuf = new Uint8Array(VIS.W * VIS.H * 4);
+const camCtx = $('#camView').getContext('2d');
+const camImg = camCtx.createImageData(VIS.W, VIS.H);
+const VIS_COLORS = [['red', h => h < 15 || h > 340, '#ff453a'], ['yellow', h => h > 40 && h < 70, '#ffd60a'], ['blue', h => h > 195 && h < 235, '#0a84ff']];
+let visColor = 'all';
+
+function captureTop() {
+  renderer.setRenderTarget(camRT);
+  renderer.render(scene, topCam);
+  renderer.setRenderTarget(null);
+  renderer.readRenderTargetPixels(camRT, 0, 0, VIS.W, VIS.H, camBuf);
+  for (let y = 0; y < VIS.H; y++)                          // GL rows are bottom-up
+    camImg.data.set(camBuf.subarray((VIS.H - 1 - y) * VIS.W * 4, (VIS.H - y) * VIS.W * 4), y * VIS.W * 4);
+  return camImg.data;
+}
+// pixel -> robot mm (known ortho camera; Python uses a homography for real cameras)
+const pixToRobot = (u, v) => ({ x: VIS.CX + (0.5 - v / VIS.H) * VIS.SPAN, y: (0.5 - u / VIS.W) * VIS.SPAN });
+
+function detectBlobs(px) {
+  const { W, H } = VIS, lab = new Int8Array(W * H).fill(-1);
+  for (let i = 0; i < W * H; i++) {
+    const r = px[i * 4] / 255, g = px[i * 4 + 1] / 255, b = px[i * 4 + 2] / 255;
+    const mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn;
+    if (mx < 0.25 || d / mx < 0.45) continue;              // V and S thresholds
+    let h = mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4;
+    h = (h * 60 + 360) % 360;
+    lab[i] = VIS_COLORS.findIndex(([, test]) => test(h));
+  }
+  const seen = new Uint8Array(W * H), blobs = [];
+  for (let i = 0; i < W * H; i++) {
+    if (lab[i] < 0 || seen[i]) continue;
+    const c = lab[i], stack = [i];
+    let n = 0, su = 0, sv = 0;
+    seen[i] = 1;
+    while (stack.length) {                                 // flood fill = connected component
+      const k = stack.pop(), u = k % W, v = (k / W) | 0;
+      n++; su += u + 0.5; sv += v + 0.5;
+      for (const [du, dv] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+        const uu = u + du, vv = v + dv, kk = vv * W + uu;
+        if (uu >= 0 && uu < W && vv >= 0 && vv < H && !seen[kk] && lab[kk] === c) { seen[kk] = 1; stack.push(kk); }
+      }
+    }
+    if (n < 40) continue;                                   // ignore noise
+    const u = su / n, v = sv / n;
+    blobs.push({ color: VIS_COLORS[c][0], css: VIS_COLORS[c][2], u, v, n, ...pixToRobot(u, v) });
+  }
+  return blobs.sort((a, b) => b.n - a.n);
+}
+function scanVision() {
+  const px = captureTop();
+  const blobs = detectBlobs(px);
+  camCtx.putImageData(camImg, 0, 0);
+  camCtx.font = '600 10px -apple-system, sans-serif';
+  for (const b of blobs) {
+    const err = Math.min(...cubes.map(c => { const p = robotFromWorld(c.m.position); return Math.hypot(p.x - b.x, p.y - b.y); }));
+    b.err = err;
+    camCtx.strokeStyle = '#fff'; camCtx.lineWidth = 2;
+    camCtx.beginPath(); camCtx.arc(b.u, b.v, 13, 0, Math.PI * 2); camCtx.stroke();
+    camCtx.beginPath(); camCtx.moveTo(b.u - 5, b.v); camCtx.lineTo(b.u + 5, b.v); camCtx.moveTo(b.u, b.v - 5); camCtx.lineTo(b.u, b.v + 5); camCtx.stroke();
+    camCtx.fillStyle = '#fff';
+    camCtx.fillText(`${b.x.toFixed(0)}, ${b.y.toFixed(0)}`, b.u + 16, b.v + 4);
+  }
+  $('#visList').innerHTML = blobs.length
+    ? blobs.map(b => `<span style="color:${b.css}">●</span> ${b.color} → (${b.x.toFixed(0)}, ${b.y.toFixed(0)}) mm <span style="color:var(--muted)">· คลาดเคลื่อน ${b.err.toFixed(1)} mm</span>`).join('<br>')
+    : 'ไม่พบวัตถุ';
+  return blobs;
+}
+let visT = 0;
+function visionTick(now) {
+  if (now - visT < 250 || !$('#tab-vision').classList.contains('active')) return;
+  visT = now;
+  scanVision();
+}
+$('#visColor').addEventListener('click', e => {
+  const c = e.target.dataset.c;
+  if (!c) return;
+  visColor = c;
+  $('#visColor').querySelectorAll('button').forEach(b => b.classList.toggle('active', b.dataset.c === c));
+});
+$('#visPick').onclick = () => {
+  const targets = scanVision()
+    .filter(b => (visColor === 'all' || b.color === visColor) && Math.hypot(b.x - PAD.x, b.y - PAD.y) > 25)
+    .map(b => ({ x: b.x, y: b.y, z: CUBE / 2 }));
+  if (!targets.length) { $('#visList').textContent = 'ไม่พบวัตถุที่ต้องหยิบ'; return; }
+  stopPlayback(); program = buildDemo(targets); renderProgram(); startPlayback();
+};
+$('#visShuffle').onclick = () => {
+  if (held) return;
+  stopPlayback();
+  const pts = [];
+  for (const c of cubes) {
+    let p, tries = 0;
+    do {
+      const r = 140 + Math.random() * 60, a = rad(-75 + Math.random() * 150);
+      p = { x: r * Math.cos(a), y: r * Math.sin(a) };
+    } while ((pts.some(q => Math.hypot(q.x - p.x, q.y - p.y) < 55) || Math.hypot(p.x - PAD.x, p.y - PAD.y) < 60) && ++tries < 300);
+    pts.push(p);
+    c.m.position.copy(worldFromRobot(p.x, p.y, CUBE / 2));
+    c.m.rotation.set(0, 0, 0);
+    c.vy = 0;
+  }
+  setTargets(HOME);
+};
+$('#visSave').onclick = () => {
+  scanVision();
+  const c = document.createElement('canvas');
+  c.width = VIS.W; c.height = VIS.H;
+  c.getContext('2d').putImageData(camImg, 0, 0);        // raw image without overlay
+  const a = document.createElement('a');
+  a.download = 'sim_camera.png';
+  a.href = c.toDataURL('image/png');
+  a.click();
+};
+
+// system diagram sheet
+const closeModals = () => document.querySelectorAll('.modal.open').forEach(m => m.classList.remove('open'));
+$('#diagBtn').onclick = () => $('#diagram').classList.add('open');
+$('#wireBtn').onclick = () => $('#wiring').classList.add('open');
+$('#netBtn').onclick = () => $('#network').classList.add('open');
+$('#dashBtn').onclick = () => $('#dash').classList.add('open');
+document.querySelectorAll('.modal').forEach(m => m.addEventListener('click', e => {
+  if (e.target === m || e.target.closest('[data-close], #diagClose')) closeModals();
+}));
+addEventListener('keydown', e => { if (e.key === 'Escape') closeModals(); });
+
+// debug handle for console experiments
+window.arm = { cur, tgt, setTargets, solveIK, runCommand, JOINTS, L };
+</script>
+</body>
+</html>

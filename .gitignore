@@ -1,0 +1,6 @@
+.claude/
+.pio/
+__pycache__/
+*.pyc
+.DS_Store
+calib.json
