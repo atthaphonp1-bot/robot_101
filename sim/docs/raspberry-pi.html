@@ -108,9 +108,13 @@
   <ol class="steps">
     <li><b>เขียน OS ลง microSD</b><p>Raspberry Pi Imager → Raspberry Pi 3 → Raspberry Pi OS Lite (64-bit) → ตั้ง hostname <code>robotpi</code>, WiFi, เปิด SSH</p></li>
     <li><b>SSH เข้า Pi</b><p><code>ssh &lt;user&gt;@robotpi.local</code></p></li>
-    <li><b>ติดตั้ง Mosquitto + OpenCV + เว็บ</b><p>ใช้สคริปต์ติดตั้งครั้งเดียว (ขั้นถัดไปที่จะทำให้) — เปิด MQTT แบบมีรหัสผ่าน และเปิดเว็บอัตโนมัติตอนบูต</p></li>
-    <li><b>เปลี่ยน broker ใน firmware</b><p>ตั้ง <code>MQTT_HOST</code> เป็น IP ของ Pi และใส่ <code>MQTT_USER</code>/<code>MQTT_PASS</code> ใน <code>secrets.h</code> แล้วอัปโหลดใหม่</p></li>
-    <li><b>เปิดจากมือถือ</b><p><code>http://robotpi.local:8080/remote.html</code> → ใส่ broker <code>ws://robotpi.local:9001</code></p></li>
+    <li><b>ติดตั้ง Mosquitto + OpenCV + เว็บ</b><p>รันครั้งเดียวบน Pi — จะถามชื่อ/รหัส MQTT แล้วติดตั้งทุกอย่าง เปิดเว็บอัตโนมัติตอนบูต และสรุปค่าที่ต้องใส่ใน firmware ตอนจบ</p>
+<pre><code>sudo apt-get install -y git
+git clone https://github.com/atthaphonp1-bot/robot_101.git ~/robot_101
+bash ~/robot_101/pi/setup.sh</code></pre>
+<p>อัปเดตทีหลัง: <code>cd ~/robot_101 &amp;&amp; git pull</code> (เว็บใช้ไฟล์ใหม่ทันที)</p></li>
+    <li><b>เปลี่ยน broker ใน firmware</b><p>ตั้ง <code>MQTT_HOST</code> ใน <code>main.cpp</code> เป็น <b>IP</b> ของ Pi (ESP32 ไม่รู้จักชื่อ <code>.local</code>) และใส่ <code>MQTT_USER</code>/<code>MQTT_PASS</code> ใน <code>secrets.h</code> แล้วอัปโหลดใหม่</p></li>
+    <li><b>เปิดจากมือถือ</b><p><code>http://robotpi.local:8080/remote.html</code> → ⚙ ใส่ broker <code>ws://robotpi.local:9001</code> พร้อม user/รหัส MQTT</p></li>
   </ol>
   <div class="note"><b>สำคัญ:</b> ปุ่ม E-STOP ยังต่ออยู่ที่ ESP32 และตัดไฟ servo ได้เสมอ แม้ Pi ค้างหรือรีบูต</div>
 
