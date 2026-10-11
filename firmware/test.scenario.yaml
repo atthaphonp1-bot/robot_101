@@ -1,0 +1,15 @@
+name: Robot arm firmware smoke test
+version: 1
+author: robot_101
+
+steps:
+  - wait-serial: 'Ready.'
+  - write-serial: "{\"ik\":[180,0,60,-90]}\n"
+  - wait-serial: '{"ok":1}'
+  - write-serial: "{\"ik\":[900,0,0,-90]}\n"
+  - wait-serial: '{"err":"unreachable"}'
+  - write-serial: "{\"grip\":110}\n"
+  - wait-serial: '{"ok":1}'
+  - write-serial: "{\"home\":1}\n"
+  - wait-serial: '{"ok":1}'
+  - wait-serial: 'MQTT connected'
