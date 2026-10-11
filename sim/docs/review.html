@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Architecture Review</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="docs.css">
+<style>
+  .cols { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+  .cols pre { margin: 0; background: var(--card); box-shadow: var(--shadow); border-radius: 18px; }
+  .stat { font-size: 34px; font-weight: 700; letter-spacing: -.03em; }
+</style>
+</head>
+<body>
+<main>
+  <div class="crumb"><a href="index.html">เอกสาร</a> › Review โครงสร้าง</div>
+  <p class="eyebrow">Architecture review · 12 ต.ค. 2026</p>
+  <h1>ควร restructure ไหม?</h1>
+  <p class="lede"><b>ควร — แต่แบบปรับเบา ๆ ไม่ต้องรื้อใหม่</b> ระบบทำงานได้ครบทุกชั้นแล้ว ปัญหาหลักคือ “ค่าเดียวกันอยู่หลายที่” ซึ่งจะเริ่มพังเมื่อเริ่มต่อแขนจริงและ calibrate</p>
+
+  <div class="grid">
+    <div class="card"><div class="stat">4,463</div><p>บรรทัดในโปรเจกต์ (24 ไฟล์)</p></div>
+    <div class="card"><div class="stat">1,363</div><p>บรรทัดใน <code>sim/index.html</code> ไฟล์เดียว (31%)</p></div>
+    <div class="card"><div class="stat">4 ที่</div><p>เก็บค่าแขน (ความยาว, offset, IK) ซ้ำกัน</p></div>
+    <div class="card"><div class="stat">3 ชุด</div><p>ระบบสี/สไตล์ที่แยกกัน (sim, remote, docs)</p></div>
+  </div>
+
+  <h2>สิ่งที่ดีอยู่แล้ว (เก็บไว้)</h2>
+  <div class="grid">
+    <div class="card"><h3>Protocol เดียวทุกช่องทาง</h3><p>JSON ชุดเดียวกันผ่าน USB, Serial2, WebSocket, MQTT — ต่อยอดง่าย</p></div>
+    <div class="card"><h3>Digital Twin</h3><p>Simulator กับแขนจริงรับคำสั่งเหมือนกัน ทดสอบโดยไม่มีฮาร์ดแวร์ได้</p></div>
+    <div class="card"><h3>แยก secrets ออกแล้ว</h3><p><code>secrets.h</code> ไม่ขึ้น git · มี example ให้</p></div>
+    <div class="card"><h3>Safety 2 ชั้น</h3><p>E-STOP ตัดไฟจริง + firmware หยุดรับคำสั่ง</p></div>
+  </div>
+
+  <h2>ปัญหาที่พบ</h2>
+  <table>
+    <tr><th>#</th><th>ปัญหา</th><th>อยู่ที่</th><th>ความเสี่ยง</th></tr>
+    <tr><td>1</td><td><b>ค่าแขนซ้ำ 4 ที่</b> — ความยาวท่อน, offset ของ servo, joint limit, สูตร IK/FK, ค่ากริปเปอร์</td><td><code>main.cpp</code>, <code>sim/index.html</code>, <code>remote.js</code>, <code>planner.py</code></td><td><span class="tag bad">สูง</span><br>calibrate แขนจริงแล้วแก้ไม่ครบ → sim กับของจริงไม่ตรงกัน</td></tr>
+    <tr><td>2</td><td><b>Client ฝั่ง Python 2–3 ตัวทำงานคล้ายกัน</b> — <code>vision_pick.py</code> มี Arm ของตัวเอง (WebSocket), <code>serial_test.py</code>, และ <code>arm_core.py</code> ที่กำลังจะทำ (Serial)</td><td><code>vision/</code>, <code>pi/</code></td><td><span class="tag warn">กลาง</span><br>แก้ protocol ทีต้องแก้หลายไฟล์</td></tr>
+    <tr><td>3</td><td><b><code>sim/index.html</code> ใหญ่ก้อนเดียว</b> — 3D, IK, UI, กล้อง, MQTT, และ diagram 4 อันอยู่ในไฟล์เดียว</td><td><code>sim/index.html</code></td><td><span class="tag warn">กลาง</span><br>แก้ยาก, ส่งให้ orchestrator ทำทีละส่วนไม่ได้</td></tr>
+    <tr><td>4</td><td><b>Diagram ซ้ำ</b> — ผังระบบ/วงจร/เครือข่ายใน Simulator กับหน้า docs เริ่มไม่ตรงกัน (เช่น Pi ยังไม่อยู่ในผังของ Simulator)</td><td><code>sim/index.html</code>, <code>sim/docs/</code></td><td><span class="tag warn">กลาง</span></td></tr>
+    <tr><td>5</td><td><b>สไตล์ 3 ชุด</b> — ตัวแปรสีไม่เหมือนกัน (เช่น <code>--c-gray</code> ที่ไม่มีจริง)</td><td>sim, remote, docs</td><td><span class="tag ok">ต่ำ</span></td></tr>
+    <tr><td>6</td><td><b>Protocol ไม่มีสเปกกลาง</b> — คำสั่งใหม่ (<code>status</code>) ต้องไปไล่ดูโค้ด</td><td>—</td><td><span class="tag warn">กลาง</span></td></tr>
+    <tr><td>7</td><td><b><code>MQTT_HOST</code> อยู่ใน <code>main.cpp</code></b> แต่ user/pass อยู่ใน <code>secrets.h</code> — ย้ายไป Pi ต้องแก้ 2 ไฟล์</td><td><code>firmware/</code></td><td><span class="tag ok">ต่ำ</span></td></tr>
+    <tr><td>8</td><td><b>ไม่มี test อัตโนมัติ</b> — build firmware/รัน checks ด้วยมือทุกครั้ง</td><td>CI</td><td><span class="tag warn">กลาง</span></td></tr>
+    <tr><td>9</td><td><b>ชื่อโฟลเดอร์ <code>sim/</code></b> แต่มีทั้ง remote และ docs (คือเว็บทั้งหมด)</td><td>โครงสร้าง</td><td><span class="tag ok">ต่ำ</span></td></tr>
+  </table>
+
+  <h2>โครงสร้างตอนนี้ → ที่เสนอ</h2>
+  <div class="cols">
+<pre><code>robot_101/
+├── ROBOT_ARM_GUIDE.md
+├── sim/              ← เว็บทั้งหมด
+│   ├── index.html    1,363 บรรทัด
+│   ├── remote.html + remote.js
+│   └── docs/
+├── firmware/
+│   └── src/main.cpp  ไฟล์เดียว
+├── vision/           Arm(WebSocket)
+└── pi/               setup, serial_test</code></pre>
+<pre><code>robot_101/
+├── robot.json        ★ ค่าแขนที่เดียว
+├── web/              (เดิม sim/)
+│   ├── index.html    เหลือแค่โครง
+│   ├── js/  scene · ik · ui · vision · net
+│   ├── remote.html + js/remote.js
+│   ├── shared/theme.css  ★ สไตล์ชุดเดียว
+│   └── docs/  + protocol.html ★
+├── firmware/src/
+│   ├── main.cpp · kinematics · motion · comms
+│   └── robot_config.h  ★ สร้างจาก robot.json
+├── host/robotarm/    ★ Python package เดียว
+│   ├── client.py  (Arm)
+│   ├── transports: serial · websocket · mqtt
+│   └── vision/ · tests/
+└── pi/setup.sh</code></pre>
+  </div>
+
+  <h2>ลำดับที่แนะนำ</h2>
+  <ol class="steps">
+    <li><b>ทำก่อนต่อแขนจริง — ค่าแขนที่เดียว</b><p><code>robot.json</code> + สคริปต์สร้าง <code>robot_config.h</code> ให้ firmware · เว็บอ่าน <code>robot.json</code> ตรง · ย้าย <code>MQTT_HOST</code> ไป <code>secrets.h</code></p></li>
+    <li><b>Python package เดียว</b><p>ทำ <code>arm_core</code> ที่ค้างอยู่ให้เป็น <code>host/robotarm</code> ที่รองรับ Serial/WebSocket/MQTT แล้วให้ <code>vision_pick.py</code> กับ <code>serial_test.py</code> ใช้ตัวเดียวกัน — งานนี้เหมาะกับ orchestrator (แยกเป็นฟังก์ชันมี checks ได้)</p></li>
+    <li><b>หน้า Protocol + test อัตโนมัติ</b><p><code>docs/protocol.html</code> รวมทุกคำสั่ง · GitHub Actions: build firmware + รัน Python tests ทุก push</p></li>
+    <li><b>แยก Simulator เป็นโมดูล</b><p>ย้าย JS ออกเป็นไฟล์ย่อย, ลบ diagram ที่ซ้ำแล้วลิงก์ไปหน้า docs, รวม CSS เป็นชุดเดียว</p></li>
+    <li><b>ทีหลัง (ไม่รีบ)</b><p>เปลี่ยนชื่อ <code>sim/</code> → <code>web/</code> (ต้องแก้ workflow + ลิงก์ทั้งหมด) · แยก <code>main.cpp</code> เป็นหลายไฟล์</p></li>
+  </ol>
+  <div class="note"><b>ไม่แนะนำ:</b> รื้อเขียนใหม่ทั้งหมด หรือเพิ่ม framework (React, build tools) — โปรเจกต์ยังเล็ก เว็บแบบไฟล์ธรรมดาเปิดได้ทุกที่และ deploy ง่าย</div>
+
+  <footer>robot_101 · <code>sim/docs/review.html</code></footer>
+</main>
+</body>
+</html>
