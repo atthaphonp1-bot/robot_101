@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Whole System Map</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="docs.css">
+<style>
+  .band { fill: var(--fill); opacity: .45; }
+  .bandlabel { fill: var(--accent); font: 700 13px var(--font); }
+  .w.orange { stroke: var(--c-orange); }
+</style>
+</head>
+<body>
+<main>
+  <div class="crumb"><a href="index.html">เอกสาร</a> › ผังทั้งระบบ</div>
+  <p class="eyebrow">ภาพรวม · ตั้งแต่กดปุ่มจนมอเตอร์หมุน</p>
+  <h1>ผังทั้งระบบ</h1>
+  <p class="lede">คำสั่งเดินทาง 5 ชั้น: ผู้ใช้ → เครือข่าย/Pi → firmware ESP32 → ไดรเวอร์ PCA9685 → servo ทั้ง 6 ตัวที่หมุนข้อต่อของแขน</p>
+
+  <h2>ผังรวม</h2>
+  <figure class="diagram" style="margin:0">
+    <svg viewBox="0 0 900 975" role="img" aria-label="ผังทั้งระบบ 5 ชั้น จากผู้ใช้ เครือข่าย firmware ESP32 ไดรเวอร์และไฟ ไปจนถึง servo 6 ตัวและข้อต่อของแขน">
+      <!-- bands -->
+      <rect class="band" x="10" y="10" width="880" height="122" rx="18"/><text class="bandlabel" x="24" y="32">1 · ผู้ใช้งาน</text>
+      <rect class="band" x="10" y="148" width="880" height="140" rx="18"/><text class="bandlabel" x="24" y="170">2 · เครือข่าย + Raspberry Pi 3</text>
+      <rect class="band" x="10" y="304" width="880" height="252" rx="18"/><text class="bandlabel" x="24" y="326">3 · ESP32 firmware</text>
+      <rect class="band" x="10" y="572" width="880" height="122" rx="18"/><text class="bandlabel" x="24" y="594">4 · ไดรเวอร์ + ไฟเลี้ยง</text>
+      <rect class="band" x="10" y="710" width="880" height="255" rx="18"/><text class="bandlabel" x="24" y="732">5 · มอเตอร์ (servo) + ข้อต่อ</text>
+
+      <!-- ===== links (drawn first, under boxes) ===== -->
+      <!-- band 1 -> 2 -->
+      <path class="w blue" d="M350 115V180"/>
+      <path class="w blue" d="M570 115V180"/>
+      <path class="w gray" d="M790 115V150H620V180"/>
+      <path class="w purple dash" d="M650 115V140H790V190"/>
+      <path class="w blue" d="M220 225H260"/>
+      <!-- band 2 -> 3 -->
+      <path class="w purple" d="M330 275V336H150V350"/>
+      <path class="w blue dash" d="M110 260V350"/>
+      <path class="w purple dash" d="M880 225H888V340H175V350"/>
+      <path class="w gray" d="M40 80H24V390H40"/>
+      <!-- band 3 pipeline -->
+      <path class="w blue" d="M190 390H220M370 390H400M550 390H580"/>
+      <path class="w blue" d="M655 430V460"/>
+      <path class="w blue" d="M580 500H550"/>
+      <path class="w red" d="M370 500H400"/>
+      <path class="w green dash" d="M730 500H760"/>
+      <path class="w green dash" d="M820 460V298H640V275"/>
+      <!-- band 3 -> 4 -->
+      <path class="w green" d="M475 540V615"/>
+      <!-- band 4 power -->
+      <path class="w red" d="M190 645H220M330 645H400"/>
+      <!-- band 4 -> 5 -->
+      <path class="w purple" d="M500 675V745M104 745H819M104 745V760M247 745V760M390 745V760M533 745V760M676 745V760M819 745V760"/>
+      <path class="w gray" d="M104 840V880M247 840V880M390 840V880M533 840V880M676 840V880M819 840V880"/>
+
+      <!-- link labels -->
+      <text class="s" x="358" y="150">เว็บ :8080</text>
+      <text class="s" x="578" y="150">MQTT ws :9001</text>
+      <text class="s" x="668" y="134">หรือผ่านเน็ต</text>
+      <text class="s" x="225" y="214">WiFi</text>
+      <text class="s" x="338" y="300">MQTT :1883</text>
+      <text class="s" x="118" y="300">WS :81</text>
+      <text class="s" x="28" y="300" transform="rotate(-90 28 300)">USB Serial</text>
+      <text class="s" x="740" y="490">10 Hz</text>
+      <text class="s" x="826" y="380">state</text>
+      <text class="s" x="372" y="492">หยุด</text>
+      <text class="s" x="482" y="585">I2C 0x40</text>
+      <text class="s" x="508" y="712">PWM 50 Hz · 0.5–2.5 ms</text>
+
+      <!-- ===== band 1 ===== -->
+      <rect class="blk" x="40" y="45" width="180" height="70" rx="14"/><text class="t" x="54" y="72">Serial Monitor</text><text class="s" x="54" y="92">สาย USB · debug</text>
+      <rect class="blk" x="260" y="45" width="180" height="70" rx="14"/><text class="t" x="274" y="72">คอม: Simulator 3D</text><text class="s" x="274" y="92">Digital Twin · สอนท่า</text>
+      <rect class="blk" x="480" y="45" width="180" height="70" rx="14"/><text class="t" x="494" y="72">มือถือ: แดชบอร์ด</text><text class="s" x="494" y="92">slider · jog · STOP</text>
+      <rect class="blk" x="700" y="45" width="180" height="70" rx="14"/><text class="t" x="714" y="72">กล้อง USB</text><text class="s" x="714" y="92">หาวัตถุตามสี</text>
+
+      <!-- ===== band 2 ===== -->
+      <rect class="blk" x="40" y="190" width="180" height="70" rx="14"/><text class="t" x="54" y="217">WiFi Router</text><text class="s" x="54" y="237">2.4 GHz วงบ้าน</text>
+      <rect class="blk-hi" x="260" y="180" width="400" height="95" rx="16"/>
+      <text class="t" x="276" y="204">Raspberry Pi 3</text>
+      <text class="m" x="276" y="228">Mosquitto :1883 / :9001</text>
+      <text class="m" x="276" y="248">เว็บ :8080 · sim/ docs/</text>
+      <text class="m" x="476" y="228">vision_pick.py</text>
+      <text class="m" x="476" y="248">OpenCV → {"ik":…}</text>
+      <rect class="blk" x="700" y="190" width="180" height="70" rx="14" stroke-dasharray="6 5"/><text class="t" x="714" y="217">Broker สาธารณะ</text><text class="s" x="714" y="237">ทางเลือก (ทดสอบ)</text>
+
+      <!-- ===== band 3 ===== -->
+      <rect class="blk" x="40" y="350" width="150" height="80" rx="14"/><text class="t" x="54" y="376">รับคำสั่ง</text><text class="s" x="54" y="396">WS · MQTT · Serial</text><text class="s" x="54" y="414">JSON 1 บรรทัด</text>
+      <rect class="blk" x="220" y="350" width="150" height="80" rx="14"/><text class="t" x="234" y="376">handleCommand</text><text class="s" x="234" y="396">ตรวจ E-STOP</text><text class="s" x="234" y="414">joint limit</text>
+      <rect class="blk" x="400" y="350" width="150" height="80" rx="14"/><text class="t" x="414" y="376">autoIK</text><text class="s" x="414" y="396">x,y,z,pitch</text><text class="s" x="414" y="414">→ มุม J1–J4</text>
+      <rect class="blk" x="580" y="350" width="150" height="80" rx="14"/><text class="t" x="594" y="376">setTargets</text><text class="s" x="594" y="396">sync move</text><text class="s" x="594" y="414">ถึงพร้อมกัน</text>
+      <rect class="blk" x="40" y="460" width="150" height="80" rx="14"/><text class="t" x="54" y="486">จอ OLED</text><text class="s" x="54" y="506">IP · มุม · สถานะ</text><text class="s" x="54" y="524">ทุก 200 ms</text>
+      <rect class="blk" x="220" y="460" width="150" height="80" rx="14" style="stroke:var(--c-red)"/><text class="t" x="234" y="486">ปุ่ม E-STOP</text><text class="s" x="234" y="506">GPIO4 · กด=สลับ</text><text class="s" x="234" y="524">หยุดทันที</text>
+      <rect class="blk" x="400" y="460" width="150" height="80" rx="14"/><text class="t" x="414" y="486">writeServo</text><text class="s" x="414" y="506">มุม → pulse</text><text class="s" x="414" y="524">500–2500 µs</text>
+      <rect class="blk" x="580" y="460" width="150" height="80" rx="14"/><text class="t" x="594" y="486">Motion loop</text><text class="s" x="594" y="506">50 Hz (ทุก 20 ms)</text><text class="s" x="594" y="524">ขยับทีละนิด °/s</text>
+      <rect class="blk" x="760" y="460" width="120" height="80" rx="14"/><text class="t" x="774" y="486">ส่งสถานะ</text><text class="s" x="774" y="506">state · moving</text><text class="s" x="774" y="524">estop</text>
+
+      <!-- ===== band 4 ===== -->
+      <rect class="blk" x="40" y="615" width="150" height="60" rx="14"/><text class="t" x="54" y="640">PSU servo</text><text class="s" x="54" y="660">5–6V 10A</text>
+      <rect class="blk" x="220" y="615" width="110" height="60" rx="14" style="stroke:var(--c-red)"/><text class="t" x="234" y="640">E-STOP</text><text class="s" x="234" y="660">หน้าสัมผัส NC</text>
+      <rect class="blk-hi" x="400" y="615" width="200" height="60" rx="14"/><text class="t" x="414" y="640">PCA9685</text><text class="s" x="414" y="660">16 ช่อง · V+ มี C 1000µF</text>
+      <rect class="blk" x="640" y="615" width="240" height="60" rx="14"/><text class="t" x="654" y="640">ไฟบอร์ด</text><text class="s" x="654" y="660">ESP32: USB 5V · Pi: 5V 2.5A · GND ร่วม</text>
+
+      <!-- ===== band 5: servos + joints ===== -->
+      <g>
+        <rect class="blk" x="40" y="760" width="128" height="80" rx="14"/><text class="t" x="54" y="786">Servo J1</text><text class="m" x="54" y="806">CH0</text><text class="s" x="54" y="826">MG996R</text>
+        <rect class="blk" x="183" y="760" width="128" height="80" rx="14"/><text class="t" x="197" y="786">Servo J2</text><text class="m" x="197" y="806">CH1</text><text class="s" x="197" y="826">MG996R</text>
+        <rect class="blk" x="326" y="760" width="128" height="80" rx="14"/><text class="t" x="340" y="786">Servo J3</text><text class="m" x="340" y="806">CH2</text><text class="s" x="340" y="826">MG996R</text>
+        <rect class="blk" x="469" y="760" width="128" height="80" rx="14"/><text class="t" x="483" y="786">Servo J4</text><text class="m" x="483" y="806">CH3</text><text class="s" x="483" y="826">MG996R</text>
+        <rect class="blk" x="612" y="760" width="128" height="80" rx="14"/><text class="t" x="626" y="786">Servo J5</text><text class="m" x="626" y="806">CH4</text><text class="s" x="626" y="826">MG996R</text>
+        <rect class="blk" x="755" y="760" width="128" height="80" rx="14"/><text class="t" x="769" y="786">Servo J6</text><text class="m" x="769" y="806">CH5</text><text class="s" x="769" y="826">MG996R</text>
+      </g>
+      <g>
+        <rect class="blk-hi" x="40" y="880" width="128" height="68" rx="14"/><text class="t" x="54" y="906">ฐานหมุน</text><text class="s" x="54" y="926">หมุนรอบแกนตั้ง</text>
+        <rect class="blk-hi" x="183" y="880" width="128" height="68" rx="14"/><text class="t" x="197" y="906">ไหล่</text><text class="s" x="197" y="926">ยกแขนท่อนบน</text>
+        <rect class="blk-hi" x="326" y="880" width="128" height="68" rx="14"/><text class="t" x="340" y="906">ศอก</text><text class="s" x="340" y="926">พับแขนท่อนล่าง</text>
+        <rect class="blk-hi" x="469" y="880" width="128" height="68" rx="14"/><text class="t" x="483" y="906">ข้อมือก้ม-เงย</text><text class="s" x="483" y="926">มุมปลายมือ</text>
+        <rect class="blk-hi" x="612" y="880" width="128" height="68" rx="14"/><text class="t" x="626" y="906">ข้อมือหมุน</text><text class="s" x="626" y="926">หมุนกริปเปอร์</text>
+        <rect class="blk-hi" x="755" y="880" width="128" height="68" rx="14"/><text class="t" x="769" y="906">กริปเปอร์</text><text class="s" x="769" y="926">หนีบ / ปล่อย</text>
+      </g>
+    </svg>
+    <div class="legend">
+      <span><i style="background:var(--c-blue)"></i>คำสั่ง / ข้อมูล</span>
+      <span><i style="background:var(--c-purple)"></i>MQTT · PWM</span>
+      <span><i style="background:var(--c-green)"></i>I2C · สถานะย้อนกลับ (เส้นประ)</span>
+      <span><i style="background:var(--c-red)"></i>ไฟ servo · E-STOP</span>
+      <span><i style="background:var(--muted)"></i>USB · กลไก</span>
+    </div>
+  </figure>
+
+  <h2>ข้างใน servo หนึ่งตัว</h2>
+  <p class="lede" style="margin-bottom:16px">servo คือมอเตอร์ DC + เฟืองทด + ตัวต้านทานปรับค่าที่วัดมุม วงจรข้างในเทียบ “มุมที่สั่ง” กับ “มุมจริง” แล้วหมุนจนตรงกัน (closed loop)</p>
+  <figure class="diagram" style="margin:0">
+    <svg viewBox="0 0 900 300" role="img" aria-label="ภายใน servo: สัญญาณ PWM เข้าวงจรควบคุม ผ่าน H-bridge ไปมอเตอร์ DC เฟืองทด และแกนออก โดยมีโพเทนชิโอมิเตอร์วัดมุมย้อนกลับไปวงจรควบคุม">
+      <!-- pulse waveform -->
+      <text class="t" x="20" y="34">สัญญาณจาก PCA9685</text>
+      <path class="w purple" d="M20 120H40V70H75V120H170V70H205V120H230"/>
+      <text class="s" x="20" y="146">กว้าง 0.5 ms = 0°</text>
+      <text class="s" x="20" y="164">1.5 ms = 90° · 2.5 ms = 180°</text>
+      <text class="s" x="20" y="182">ซ้ำทุก 20 ms (50 Hz)</text>
+
+      <path class="w purple" d="M232 100H262"/>
+      <path class="w blue" d="M412 100H442M572 100H602M732 100H762"/>
+      <path class="w gray" d="M667 135V200H837V135"/>
+      <path class="w green dash" d="M837 230V262H337V135"/>
+
+      <rect class="blk" x="262" y="62" width="150" height="76" rx="14"/><text class="t" x="276" y="88">วงจรควบคุม</text><text class="s" x="276" y="108">เทียบมุมสั่ง</text><text class="s" x="276" y="124">กับมุมจริง</text>
+      <rect class="blk" x="442" y="62" width="130" height="76" rx="14"/><text class="t" x="456" y="88">H-bridge</text><text class="s" x="456" y="108">กลับทิศ</text><text class="s" x="456" y="124">ปรับแรง</text>
+      <rect class="blk-hi" x="602" y="62" width="130" height="76" rx="14"/><text class="t" x="616" y="88">มอเตอร์ DC</text><text class="s" x="616" y="108">หมุนเร็ว</text><text class="s" x="616" y="124">แรงบิดน้อย</text>
+      <rect class="blk" x="762" y="62" width="130" height="76" rx="14"/><text class="t" x="776" y="88">เฟืองทด</text><text class="s" x="776" y="108">ลดรอบ</text><text class="s" x="776" y="124">เพิ่มแรงบิด</text>
+      <rect class="blk-hi" x="762" y="170" width="130" height="60" rx="14"/><text class="t" x="776" y="196">แกนออก + horn</text><text class="s" x="776" y="214">→ ข้อต่อแขน</text>
+      <rect class="blk" x="440" y="205" width="200" height="44" rx="12"/><text class="t" x="454" y="232">Potentiometer วัดมุม</text>
+      <text class="s" x="345" y="250">มุมจริง (feedback)</text>
+      <text class="s" x="676" y="190">ติดแกนเดียวกัน</text>
+    </svg>
+  </figure>
+
+  <h2>เวลาในแต่ละช่วง</h2>
+  <table>
+    <tr><th>ช่วง</th><th>ความถี่ / เวลา</th><th>หมายเหตุ</th></tr>
+    <tr><td>มือถือ ส่ง slider</td><td>ไม่เกินทุก 120 ms</td><td>กดปุ่มตำแหน่งค้าง: ทุก 200 ms</td></tr>
+    <tr><td>Simulator ส่งท่า</td><td>ไม่เกินทุก 50 ms</td><td>Digital Twin</td></tr>
+    <tr><td>MQTT ในบ้าน (ผ่าน Pi)</td><td>ไม่กี่ ms – สิบกว่า ms</td><td>ผ่านเน็ต/broker สาธารณะจะช้ากว่า</td></tr>
+    <tr><td>Motion loop บน ESP32</td><td>50 Hz (ทุก 20 ms)</td><td>คุมความเร็วเป็น °/s ทุกข้อถึงพร้อมกัน</td></tr>
+    <tr><td>PWM จาก PCA9685</td><td>50 Hz, pulse 0.5–2.5 ms</td><td>ทุกช่องพร้อมกัน ไม่กิน CPU ของ ESP32</td></tr>
+    <tr><td>ส่งสถานะกลับ</td><td>10 Hz ขณะขยับ · 1 Hz ตอนนิ่ง</td><td>ผ่าน MQTT / WebSocket</td></tr>
+  </table>
+
+  <h2>ข้อต่อ ↔ ช่อง ↔ มุม</h2>
+  <table>
+    <tr><th>ข้อ</th><th>PCA9685</th><th>Wokwi GPIO</th><th>ช่วงมุม servo</th><th>Home</th></tr>
+    <tr><td>J1 ฐานหมุน</td><td>CH0</td><td>13</td><td>0–180°</td><td>90°</td></tr>
+    <tr><td>J2 ไหล่</td><td>CH1</td><td>12</td><td>15–165°</td><td>90°</td></tr>
+    <tr><td>J3 ศอก</td><td>CH2</td><td>14</td><td>0–180°</td><td>135°</td></tr>
+    <tr><td>J4 ข้อมือก้ม-เงย</td><td>CH3</td><td>27</td><td>0–180°</td><td>135°</td></tr>
+    <tr><td>J5 ข้อมือหมุน</td><td>CH4</td><td>26</td><td>0–180°</td><td>90°</td></tr>
+    <tr><td>J6 กริปเปอร์</td><td>CH5</td><td>25</td><td>10–120°</td><td>80°</td></tr>
+  </table>
+  <div class="note"><b>ความปลอดภัย 2 ชั้น:</b> ปุ่ม E-STOP ตัดไฟ servo โดยตรง (ฮาร์ดแวร์) และแจ้ง ESP32 ให้หยุดรับคำสั่ง (ซอฟต์แวร์) — ทำงานได้แม้ Pi หรือเน็ตล่ม</div>
+
+  <footer>robot_101 · <code>sim/docs/system.html</code></footer>
+</main>
+</body>
+</html>
