@@ -26,8 +26,8 @@
             </div>
             <div class="card">
                 <h3>B · UART ผ่าน GPIO</h3>
-                <span class="tag warn">ต้องแก้ firmware</span>
-                <p>ต่อ TX/RX/GND 3 เส้น ใช้ /dev/serial0 · firmware ตอนนี้อ่านแค่ Serial (USB) ต้องเพิ่ม Serial2 ที่ GPIO16/17 ก่อน</p>
+                <span class="tag ok">รองรับแล้ว</span>
+                <p>ต่อ TX/RX/GND 3 เส้น ใช้ /dev/serial0 · firmware รับคำสั่งทาง Serial2 (GPIO16 RX / GPIO17 TX, 115200) พร้อมกับ USB · ปิดได้ด้วย <code>USE_SERIAL2 0</code></p>
             </div>
             <div class="card">
                 <h3>C · WiFi / MQTT</h3>

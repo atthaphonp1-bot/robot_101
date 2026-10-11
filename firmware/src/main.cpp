@@ -24,6 +24,9 @@ const int SERVO_PINS[6] = {13, 12, 14, 27, 26, 25};
 #include "secrets.h"
 const char* AP_SSID = "RobotArm";        // fallback access point -> 192.168.4.1
 const int ESTOP_PIN = 4;                 // button to GND, toggles E-stop
+// Option B: commands from Raspberry Pi over UART (Pi TXD -> GPIO16, Pi RXD <- GPIO17, GND)
+#define USE_SERIAL2 1
+const int SERIAL2_RX = 16, SERIAL2_TX = 17;
 
 // ---- MQTT: control over the internet ----------------------------------------
 #define USE_MQTT 1
@@ -134,6 +137,33 @@ String handleCommand(const char* txt) {
   return "";
 }
 
+/* Polls incoming characters from a Stream, assembles them into lines and
+   dispatches complete lines to a handler, replying on the same Stream. */
+void pollLines(Stream& port, String& buf, String (*handler)(const char*)) {
+    while (port.available()) {
+        int ic = port.read();               // read next byte, -1 if none
+        if (ic < 0) break;                  // safety guard
+        char c = static_cast<char>(ic);
+        if (c == '\n' || c == '\r') {       // line terminator
+            if (buf.length() > 0) {
+                String reply = handler(buf.c_str());
+                if (reply.length())
+                    port.println(reply);
+                else
+                    port.println("{\"ok\":1}");
+                buf = "";
+            }
+            // if buf empty, ignore extra terminators (e.g., CR+LF)
+        } else {
+            buf += c;                        // accumulate character
+            if (buf.length() > 256) {        // overflow protection
+                buf = "";
+                port.println("{\"err\":\"line too long\"}");
+            }
+        }
+    }
+}
+
 void onWs(uint8_t num, WStype_t type, uint8_t* payload, size_t len) {
   if (type == WStype_TEXT) {
     String reply = handleCommand((const char*)payload);
@@ -198,6 +228,9 @@ void drawOled() {
 // ---- setup / loop -------------------------------------------------------------
 void setup() {
   Serial.begin(115200);
+#if USE_SERIAL2
+  Serial2.begin(115200, SERIAL_8N1, SERIAL2_RX, SERIAL2_TX);
+#endif
   pinMode(ESTOP_PIN, INPUT_PULLUP);
   Wire.begin(21, 22);
 
@@ -239,14 +272,13 @@ void loop() {
   mqttLoop();
 #endif
 
-  // serial: one JSON command per line
-  static String line;
-  while (Serial.available()) {
-    char ch = Serial.read();
-    if (ch == '\n' || ch == '\r') {
-      if (line.length()) { String r = handleCommand(line.c_str()); Serial.println(r.length() ? r : "{\"ok\":1}"); line = ""; }
-    } else line += ch;
-  }
+  // serial: one JSON command per line (USB, and Pi UART on Serial2)
+  static String line0;
+  pollLines(Serial, line0, handleCommand);
+#if USE_SERIAL2
+  static String line2;
+  pollLines(Serial2, line2, handleCommand);
+#endif
 
   // E-stop toggle (debounced falling edge)
   static bool lastBtn = HIGH;
