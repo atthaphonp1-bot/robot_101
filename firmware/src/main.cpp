@@ -111,6 +111,14 @@ bool autoIK(float x, float y, float z, float pitch, float out[4]) {
 String handleCommand(const char* txt) {
   JsonDocument d;
   if (deserializeJson(d, txt)) return "{\"err\":\"bad json\"}";
+  if (d["status"].is<int>()) {                      // polled by pi/arm_core.py to know when a move is done
+    bool moving = false;
+    for (int i = 0; i < 6; i++) if (fabsf(tgt[i] - cur[i]) > 0.5f) moving = true;
+    char buf[128];
+    snprintf(buf, sizeof buf, "{\"status\":[%.0f,%.0f,%.0f,%.0f,%.0f,%.0f],\"moving\":%s,\"estop\":%s}",
+             cur[0], cur[1], cur[2], cur[3], cur[4], cur[5], moving ? "true" : "false", estop ? "true" : "false");
+    return String(buf);
+  }
   if (d["stop"].is<int>()) { setTargets(cur); return "{\"ok\":\"stop\"}"; }
   if (d["speed"].is<float>()) { speedDps = constrain(d["speed"].as<float>(), 10, 360); return "{\"ok\":\"speed\"}"; }
   if (estop) return "{\"err\":\"estop\"}";
