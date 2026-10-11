@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Pi ESP32 Wiring</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="docs.css">
+</head>
+<body>
+    <main>
+        <div class="crumb"><a href="index.html">เอกสาร</a> › ต่อสาย Pi ↔ ESP32</div>
+
+        <p class="eyebrow">วงจร · Raspberry Pi 3 + ESP32</p>
+        <h1>ต่อสาย Pi 3 กับ ESP32</h1>
+        <p class="lede">Pi คุยกับ ESP32 ได้ 3 ทาง — ทางที่ง่ายและปลอดภัยที่สุดคือสาย USB เส้นเดียว</p>
+
+        <h2>เลือกทางเชื่อม</h2>
+        <div class="grid">
+            <div class="card">
+                <h3>A · สาย USB</h3>
+                <span class="tag ok">แนะนำ</span>
+                <p>สายเส้นเดียวได้ทั้งไฟเลี้ยง ESP32 และ Serial · Pi เห็นเป็น /dev/ttyUSB0 · firmware ปัจจุบันใช้ได้ทันที</p>
+            </div>
+            <div class="card">
+                <h3>B · UART ผ่าน GPIO</h3>
+                <span class="tag warn">ต้องแก้ firmware</span>
+                <p>ต่อ TX/RX/GND 3 เส้น ใช้ /dev/serial0 · firmware ตอนนี้อ่านแค่ Serial (USB) ต้องเพิ่ม Serial2 ที่ GPIO16/17 ก่อน</p>
+            </div>
+            <div class="card">
+                <h3>C · WiFi / MQTT</h3>
+                <span class="tag ok">ไม่ต้องต่อสาย</span>
+                <p>ESP32 ต่อ Mosquitto บน Pi ผ่าน WiFi · ESP32 ใช้ไฟจาก adapter USB ของตัวเอง</p>
+            </div>
+        </div>
+
+        <h2>ผังต่อสาย</h2>
+        <figure class="diagram" style="margin:0">
+            <svg viewBox="0 0 900 560" role="img" aria-label="ผังต่อสาย Raspberry Pi 3 กับ ESP32: ทางสาย USB, ทาง UART ผ่าน GPIO, กล้อง, ไฟเลี้ยง และ PCA9685">
+  <!-- Paths (drawn first) -->
+  <path class="w gray" d="M324 202H576"/>
+  <path class="w purple" d="M324 232H576"/>
+  <path class="w blue" d="M324 262H576"/>
+  <path class="w green" d="M190 325H470V298H600"/>
+  <path class="w gray" d="M115 350V360H220V490H250"/>
+  <path class="w red" d="M115 425V465"/>
+  <path class="w green dash" d="M730 330V420"/>
+
+  <!-- Board outlines -->
+  <rect class="blk-hi" x="20" y="30" width="300" height="420" rx="20"/>
+  <rect class="blk-hi" x="580" y="30" width="300" height="300" rx="20"/>
+  <rect class="blk" x="580" y="420" width="300" height="95" rx="14"/>
+
+  <!-- Pi sub‑components -->
+  <rect class="blk" x="40" y="300" width="150" height="50" rx="12"/>
+  <rect class="blk" x="40" y="375" width="150" height="50" rx="12"/>
+
+  <!-- ESP32 sub‑components -->
+  <rect class="blk" x="600" y="280" width="160" height="36" rx="10"/>
+
+  <!-- Webcam and Adapter -->
+  <rect class="blk" x="250" y="465" width="150" height="50" rx="12"/>
+  <rect class="blk" x="40" y="465" width="150" height="50" rx="12"/>
+
+  <!-- Pin dots -->
+  <circle class="blk" cx="320" cy="112" r="4"/>
+  <circle class="blk" cx="320" cy="142" r="4"/>
+  <circle class="blk" cx="320" cy="172" r="4"/>
+  <circle class="blk" cx="320" cy="202" r="4"/>
+  <circle class="blk" cx="320" cy="232" r="4"/>
+  <circle class="blk" cx="320" cy="262" r="4"/>
+
+  <circle class="blk" cx="580" cy="202" r="4"/>
+  <circle class="blk" cx="580" cy="232" r="4"/>
+  <circle class="blk" cx="580" cy="262" r="4"/>
+
+  <!-- Text labels -->
+  <!-- Pi board -->
+  <text class="t" x="38" y="60">Raspberry Pi 3</text>
+  <text class="s" x="38" y="80">GPIO 40 ขา</text>
+
+  <!-- Pi GPIO pins -->
+  <text class="m" x="40" y="116">Pin 1 · 3V3</text>
+  <text class="m" x="40" y="146">Pin 3 · GPIO2 SDA</text>
+  <text class="m" x="40" y="176">Pin 5 · GPIO3 SCL</text>
+  <text class="m" x="40" y="206">Pin 6 · GND</text>
+  <text class="m" x="40" y="236">Pin 8 · GPIO14 TXD</text>
+  <text class="m" x="40" y="266">Pin 10 · GPIO15 RXD</text>
+
+  <!-- Pi USB / Power -->
+  <text class="t" x="54" y="330">USB‑A ×4</text>
+  <text class="t" x="54" y="398">micro‑USB</text>
+  <text class="s" x="54" y="414">ไฟเข้า Pi</text>
+
+  <!-- ESP32 board -->
+  <text class="t" x="598" y="60">ESP32 DevKit V1</text>
+  <text class="s" x="598" y="80">WROOM‑32</text>
+
+  <!-- ESP32 pins -->
+  <text class="m" x="592" y="206">GND</text>
+  <text class="m" x="592" y="236">GPIO16 RX2</text>
+  <text class="m" x="592" y="266">GPIO17 TX2</text>
+
+  <!-- ESP32 USB -->
+  <text class="s" x="612" y="303">USB (micro / Type‑C)</text>
+
+  <!-- Webcam -->
+  <text class="t" x="264" y="488">กล้อง USB</text>
+  <text class="s" x="264" y="504">เสียบ Pi</text>
+
+  <!-- Pi adapter -->
+  <text class="t" x="54" y="488">Adapter 5V 2.5A</text>
+  <text class="s" x="54" y="504">ไฟ Pi เท่านั้น</text>
+
+  <!-- PCA9685 -->
+  <text class="t" x="598" y="446">PCA9685 + Servo</text>
+  <text class="s" x="598" y="466">ไฟ servo แยก 5–6V 10A</text>
+  <text class="s" x="598" y="486">ห้ามดึงไฟ servo จาก Pi / ESP32</text>
+  <text class="s" x="598" y="504">ดูหน้า: วงจร (Simulator)</text>
+
+  <!-- Path labels -->
+  <text class="s" x="420" y="196">GND ร่วม</text>
+  <text class="s" x="400" y="226">TXD → RX2</text>
+  <text class="s" x="400" y="256">RXD ← TX2</text>
+  <text class="s" x="300" y="318">ทาง A: สาย USB = ไฟ + Serial</text>
+  <text class="s" x="738" y="380">I2C GPIO21/22</text>
+
+  <!-- Caption -->
+  <text class="s" x="440" y="150" text-anchor="middle">ทาง B: UART ผ่าน GPIO</text>
+</svg>
+            <div class="legend">
+                <span><i style="background:var(--c-green)"></i>USB / I2C</span>
+                <span><i style="background:var(--c-purple)"></i>Pi TX → ESP32 RX</span>
+                <span><i style="background:var(--c-blue)"></i>ESP32 TX → Pi RX</span>
+                <span><i style="background:var(--muted)"></i>GND / กล้อง</span>
+                <span><i style="background:var(--c-red)"></i>ไฟ Pi</span>
+            </div>
+        </figure>
+
+        <h2>ทาง B: ตารางขา UART</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Pi 3 ขา</th>
+                    <th>ESP32 ขา</th>
+                    <th>หมายเหตุ</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Pin 8 · GPIO14 TXD</td>
+                    <td>GPIO16 RX2</td>
+                    <td>ไขว้ TX → RX</td>
+                </tr>
+                <tr>
+                    <td>Pin 10 · GPIO15 RXD</td>
+                    <td>GPIO17 TX2</td>
+                    <td>ไขว้ RX ← TX</td>
+                </tr>
+                <tr>
+                    <td>Pin 6 · GND</td>
+                    <td>GND</td>
+                    <td>ต้องต่อเสมอ</td>
+                </tr>
+                <tr>
+                    <td>Pin 1 · 3V3</td>
+                    <td>—</td>
+                    <td>ห้ามต่อ 3V3 ข้ามบอร์ด</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h2>ขั้นตอน ทาง A (สาย USB)</h2>
+        <ol class="steps">
+            <li>
+                <b>เสียบสาย USB</b>
+                <p>จากช่อง USB-A ของ Pi ไปช่อง USB ของ ESP32 (ใช้สายที่ส่งข้อมูลได้ ไม่ใช่สายชาร์จอย่างเดียว)</p>
+            </li>
+            <li>
+                <b>ตรวจว่า Pi เห็นบอร์ด</b>
+                <p><code>ls /dev/ttyUSB* /dev/ttyACM*</code></p>
+            </li>
+            <li>
+                <b>ติดตั้งตัวเปิด Serial</b>
+                <p><code>sudo apt-get install -y python3-serial</code></p>
+            </li>
+            <li>
+                <b>ลองส่งคำสั่ง</b>
+                <p><code>python3 -m serial.tools.miniterm /dev/ttyUSB0 115200</code> แล้วพิมพ์ <code>{"home":1}</code> กด Enter ควรได้ <code>{"ok":1}</code>.</p>
+            </li>
+        </ol>
+
+        <h2>ทาง B: เปิด UART บน Pi</h2>
+        <ol class="steps">
+            <li>
+                <b>เปิด hardware serial</b>
+                <p><code>sudo raspi-config</code> → Interface Options → Serial Port → login shell: <b>No</b> → hardware serial: <b>Yes</b> แล้ว reboot</p>
+            </li>
+            <li>
+                <b>ใช้พอร์ต</b>
+                <p><code>/dev/serial0</code> ที่ 115200 baud</p>
+            </li>
+        </ol>
+
+        <h2>ทางเลือก: Pi คุม PCA9685 เอง (ไม่ใช้ ESP32)</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Pi 3 ขา</th>
+                    <th>PCA9685</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Pin 1 · 3V3</td>
+                    <td>VCC</td>
+                </tr>
+                <tr>
+                    <td>Pin 3 · GPIO2 SDA</td>
+                    <td>SDA</td>
+                </tr>
+                <tr>
+                    <td>Pin 5 · GPIO3 SCL</td>
+                    <td>SCL</td>
+                </tr>
+                <tr>
+                    <td>Pin 9 · GND</td>
+                    <td>GND (ร่วมกับ PSU servo)</td>
+                </tr>
+            </tbody>
+        </table>
+        <p class="lede" style="font-size:15px;margin-top:12px">เปิด I2C ใน raspi-config แล้วใช้ไลบรารี <code>adafruit-circuitpython-servokit</code> · ต้องเขียน IK/การเคลื่อนที่ใหม่เป็น Python</p>
+
+        <div class="note">
+            <b>ห้ามเด็ดขาด:</b> จ่ายไฟ servo จาก Pi หรือ ESP32 · ต่อ 5V เข้าขา GPIO (ขา GPIO รับได้แค่ 3.3V) · ต่อ 3V3 ระหว่างสองบอร์ดที่มีไฟเลี้ยงของตัวเองอยู่แล้ว — GND ต้องต่อร่วมกันทุกบอร์ด
+        </div>
+
+        <footer>robot_101 · <code>sim/docs/pi-wiring.html</code></footer>
+    </main>
+</body>
+</html>
