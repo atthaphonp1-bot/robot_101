@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>VLM Plan</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="docs.css">
+</head>
+<body>
+  <main>
+    <div class="crumb"><a href="index.html">เอกสาร</a> › แผนงาน VLM</div>
+    <p class="eyebrow">แผนงาน · รออนุมัติ</p>
+    <h1>สั่งแขนด้วยข้อความ (VLM บน cloud)</h1>
+    <p class="lede">พิมพ์คำสั่งภาษาไทยหรืออังกฤษ → VLM ดูภาพจากกล้องแล้ววางแผน → ระบบตรวจความปลอดภัย → แขนทำงาน · หลักคิด: <b>VLM เลือก — OpenCV วัด</b></p>
+
+    <h2>ผังระบบ</h2>
+    <figure class="diagram" style="margin:0">
+      <svg viewBox="0 0 900 430" role="img" aria-label="ผังระบบ VLM: พิมพ์คำสั่ง ถ่ายภาพ หาวัตถุ ส่ง VLM บน cloud ตรวจแผน แล้วสั่งแขน">
+  <!-- Paths (drawn before boxes) -->
+  <path class="w blue" d="M190 75H240"/>
+  <path class="w blue" d="M410 75H460"/>
+  <path class="w purple" d="M650 75H700"/>
+  <path class="w blue" d="M790 120V190"/>
+  <path class="w blue" d="M700 235H650"/>
+  <path class="w blue" d="M460 235H410"/>
+  <path class="w green dash" d="M240 235H190"/>
+  <path class="w gray dash" d="M445 280V330"/>
+
+  <!-- Step numbers -->
+  <text x="198" y="66" class="s">1</text>
+  <text x="418" y="66" class="s">2</text>
+  <text x="658" y="66" class="s">3</text>
+  <text x="798" y="160" class="s">4</text>
+  <text x="658" y="226" class="s">5</text>
+  <text x="418" y="226" class="s">6</text>
+  <text x="198" y="226" class="s">7</text>
+
+  <!-- Boxes -->
+  <rect x="20" y="30" width="170" height="90" rx="16" class="blk"/>
+  <text x="36" y="58" class="t">พิมพ์คำสั่ง</text>
+  <text x="36" y="78" class="s">Simulator · มือถือ · CLI</text>
+  <text x="36" y="96" class="s">เช่น หยิบกล่องแดง</text>
+
+  <rect x="240" y="30" width="170" height="90" rx="16" class="blk"/>
+  <text x="256" y="58" class="t">กล้อง + OpenCV</text>
+  <text x="256" y="78" class="s">หาวัตถุทุกชิ้น</text>
+  <text x="256" y="96" class="s">ใส่เลข ①②③ บนภาพ</text>
+
+  <rect x="460" y="30" width="190" height="90" rx="16" class="blk-hi"/>
+  <text x="476" y="58" class="t">☁ VLM (Claude)</text>
+  <text x="476" y="78" class="s">ภาพมีเลข + คำสั่ง</text>
+  <text x="476" y="96" class="s">→ แผน JSON</text>
+
+  <rect x="700" y="30" width="180" height="90" rx="16" class="blk"/>
+  <text x="716" y="58" class="t">ตรวจความปลอดภัย</text>
+  <text x="716" y="78" class="s">schema · ระยะเอื้อม</text>
+  <text x="716" y="96" class="s">กดยืนยันก่อน</text>
+
+  <rect x="700" y="190" width="180" height="90" rx="16" class="blk"/>
+  <text x="716" y="218" class="t">แปลงเป็นท่า</text>
+  <text x="716" y="238" class="s">เลขวัตถุ → mm</text>
+  <text x="716" y="256" class="s">→ {"ik":…}</text>
+
+  <rect x="460" y="190" width="190" height="90" rx="16" class="blk"/>
+  <text x="476" y="218" class="t">Arm client</text>
+  <text x="476" y="238" class="s">Serial · MQTT</text>
+  <text x="476" y="256" class="s">รอขยับเสร็จ</text>
+
+  <rect x="240" y="190" width="170" height="90" rx="16" class="blk"/>
+  <text x="256" y="218" class="t">ESP32 → servo</text>
+  <text x="256" y="238" class="s">firmware เดิม</text>
+  <text x="256" y="256" class="s">E-STOP ทำงานเสมอ</text>
+
+  <rect x="20" y="190" width="170" height="90" rx="16" class="blk"/>
+  <text x="36" y="218" class="t">ตรวจผล</text>
+  <text x="36" y="238" class="s">ถ่ายภาพหลังทำ</text>
+  <text x="36" y="256" class="s">ไม่ตรง → หยุด/ลองใหม่</text>
+
+  <rect x="240" y="330" width="410" height="70" rx="16" class="blk-hi"/>
+  <text x="256" y="358" class="t">Planner server (Mac หรือ Pi)</text>
+  <text x="256" y="378" class="s">เก็บ API key ไว้ที่นี่เท่านั้น · เบราว์เซอร์ไม่เห็น key</text>
+</svg>
+      <div class="legend">
+        <span><i style="background:var(--c-blue)"></i>คำสั่ง / ข้อมูล</span>
+        <span><i style="background:var(--c-purple)"></i>ผลจาก VLM</span>
+        <span><i style="background:var(--c-green)"></i>ตรวจผลย้อนกลับ</span>
+      </div>
+    </figure>
+
+    <h2>ทำไมให้ VLM แค่ “เลือก”</h2>
+    <div class="grid">
+      <div class="card">
+        <h3>VLM เก่งเข้าใจ</h3>
+        <p>เข้าใจฉากและคำสั่งภาษาไทยได้ดี แต่บอกตำแหน่งคลาดได้หลายเซนติเมตร</p>
+      </div>
+      <div class="card">
+        <h3>OpenCV เก่งวัด</h3>
+        <p>หาตำแหน่งแม่นระดับ mm ด้วย calibration ที่มีอยู่แล้ว</p>
+      </div>
+      <div class="card">
+        <h3>รวมกัน</h3>
+        <p>VLM ตอบแค่เลขวัตถุและการกระทำ ไม่เคยส่งมุมหรือพิกัดเอง → ปลอดภัยและแม่น</p>
+      </div>
+    </div>
+
+    <h2>ตัวอย่างคำสั่ง</h2>
+    <table>
+      <tr><th>คำสั่ง</th><th>รอบแรก</th></tr>
+      <tr><td>หยิบกล่องแดงไปวางบนแผ่นเขียว</td><td><span class="tag ok">รองรับ</span></td></tr>
+      <tr><td>เรียงกล่อง แดง น้ำเงิน เหลือง จากซ้ายไปขวา</td><td><span class="tag ok">รองรับ</span></td></tr>
+      <tr><td>วางกล่องสีเหลืองซ้อนบนกล่องที่ใกล้สุด</td><td><span class="tag ok">รองรับ</span></td></tr>
+      <tr><td>กลับท่าเริ่มต้น</td><td><span class="tag ok">รองรับ</span></td></tr>
+      <tr><td>วาดรูปวงกลม / เคลื่อนที่ตามเส้นทางอิสระ</td><td><span class="tag bad">ยังไม่รองรับ</span></td></tr>
+      <tr><td>หยิบของที่ OpenCV หาไม่เจอ</td><td><span class="tag warn">เฟสหลัง</span></td></tr>
+    </table>
+
+    <h2>รูปแบบแผนที่ VLM ตอบ</h2>
+    <pre><code>{
+  "say": "จะหยิบกล่องแดง (#2) ไปวางบนแผ่นเขียว",
+  "steps": [
+    {"action": "pick",  "object": 2},
+    {"action": "place", "target": {"pad": true}},
+    {"action": "home"}
+  ]
+}
+</code></pre>
+    <table>
+      <tr><th>action</th><th>ความหมาย</th></tr>
+      <tr><td><code>pick</code></td><td>หยิบวัตถุเลข object</td></tr>
+      <tr><td><code>place</code></td><td>วางที่ target: pad, บนวัตถุเลข on, หรือข้างวัตถุ near + side (left/right/front/back)</td></tr>
+      <tr><td><code>home</code></td><td>กลับท่าเริ่มต้น</td></tr>
+      <tr><td><code>grip</code></td><td>open / close</td></tr>
+      <tr><td><code>stop</code></td><td>หยุดทันที</td></tr>
+    </table>
+
+    <h2>ชั้นความปลอดภัย</h2>
+    <ol class="steps">
+      <li><b>ตรวจรูปแบบ</b><p>แผนต้องตรง schema · action ที่อนุญาตเท่านั้น · ไม่เกิน 10 ขั้น</p></li>
+      <li><b>ตรวจวัตถุ</b><p>เลขวัตถุต้องมีอยู่จริงในภาพล่าสุด</p></li>
+      <li><b>ตรวจระยะ</b><p>ทุกจุดต้องเอื้อมถึง (IK ผ่าน) และไม่ต่ำกว่าพื้น</p></li>
+      <li><b>กดยืนยัน</b><p>แสดงแผนเป็นภาษาคน + ภาพมีเลข แล้วให้กด “ยืนยัน” ก่อนทำ (เปิดไว้เป็นค่าเริ่มต้น)</p></li>
+      <li><b>หยุดได้เสมอ</b><p>ปุ่ม STOP ทุกหน้า + E-STOP ฮาร์ดแวร์ · ถ้าภาพหลังทำไม่ตรงแผน หยุดทันที</p></li>
+    </ol>
+
+    <h2>เฟสงาน</h2>
+    <table>
+      <tr><th>เฟส</th><th>สิ่งที่ได้</th><th>ใครทำ</th><th>ทดสอบด้วย</th></tr>
+      <tr><td>1 · Simulator</td><td>กล่องพิมพ์คำสั่งใน Simulator ใช้กล้องจำลอง · planner server บน Mac</td><td>orchestrator: วาดเลขบนภาพ, ตรวจแผน, แปลงแผนเป็นคำสั่ง · Claude Code: เรียก VLM, server, เชื่อม UI</td><td>checks + กล่องจำลองใน sim</td></tr>
+      <tr><td>2 · กล้องจริง</td><td>planner บน Pi ใช้กล้อง USB + calibration เดิม สั่งแขนผ่าน arm_core</td><td>Claude Code</td><td>แขนจริง + กล่องสี</td></tr>
+      <tr><td>3 · มือถือ</td><td>ช่องพิมพ์คำสั่งในแดชบอร์ด ส่งผ่าน MQTT topic &lt;prefix&gt;/say</td><td>orchestrator + Claude Code</td><td>มือถือจริง</td></tr>
+      <tr><td>4 · เสริม</td><td>ตรวจผลหลังทำแล้วลองใหม่ · สลับไปใช้ VLM ในเครื่องได้</td><td>—</td><td>—</td></tr>
+    </table>
+
+    <h2>สิ่งที่ต้องเตรียม</h2>
+    <div class="grid">
+      <div class="card">
+        <h3>API key</h3>
+        <p>สมัคที่ console.anthropic.com แล้วเก็บเป็น environment variable บน Mac/Pi — ห้ามใส่ในโค้ด หน้าเว็บ หรือ GitHub</p>
+      </div>
+      <div class="card">
+        <h3>โมเดล</h3>
+        <p>เริ่มที่ <code>claude-haiku-5-5</code> (เร็ว ประหยัด) สลับเป็น <code>claude-sonnet-5-5</code> เมื่อฉากซับซ้อน</p>
+      </div>
+      <div class="card">
+        <h3>ค่าใช้จ่าย</h3>
+        <p>คิดตามภาพ + ข้อความต่อคำสั่ง · ย่อภาพเหลือด้านยาว ~640px เพื่อประหยัด · ดูราคาล่าสุดที่หน้า pricing ของ Anthropic</p>
+      </div>
+    </div>
+
+    <h2>รอการอนุมัติ</h2>
+    <ol class="steps">
+      <li><b>กดยืนยันก่อนทำทุกครั้ง</b><p>เปิดไว้ตลอดในเฟส 1–2</p></li>
+      <li><b>Planner server เริ่มบน Mac</b><p>ย้ายไป Pi ในเฟส 2</p></li>
+      <li><b>เริ่มเฟส 1 เมื่อมี API key</b><p>ระหว่างรอทำส่วนที่ไม่ต้องใช้ key ได้ก่อน (วาดเลข, ตรวจแผน, UI)</p></li>
+    </ol>
+
+    <div class="note"><b>ความปลอดภัย:</b> VLM อาจตีความผิด จึงต้องผ่านชั้นตรวจและการยืนยันทุกครั้ง — อย่าให้ VLM สั่งมุม servo ตรง ๆ</div>
+
+    <footer>robot_101 · <code>sim/docs/vlm-plan.html</code></footer>
+  </main>
+</body>
+</html>
