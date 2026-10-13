@@ -306,6 +306,14 @@
         <button class="b" id="visSave">บันทึกภาพ</button>
       </div>
       <div id="visList" class="status" style="margin-top:12px">—</div>
+      <div class="sep"></div>
+      <h3>สั่งด้วยข้อความ (VLM)</h3>
+      <div class="inline">
+        <input class="txt" id="sayText" placeholder="หยิบกล่องแดงไปวางข้างน้ำเงิน" aria-label="คำสั่ง">
+        <button class="b primary" id="sayPlan">วางแผน</button>
+      </div>
+      <div id="sayOut" class="status" style="margin-top:10px">ต้องเปิด planner ก่อน: <code>python3 vlm/planner_server.py</code></div>
+      <div class="btns" style="margin-top:8px"><button class="b primary" id="sayRun" disabled>ยืนยันและทำ</button></div>
       <p class="note">กล้องจำลองมองจากด้านบน (500×500 mm) · แยกสีด้วย HSV + หากลุ่มพิกเซล (connected components) แบบเดียวกับ OpenCV ใน <code>vision/vision_pick.py</code> · ภาพที่บันทึกใช้ทดสอบกับ Python ได้: <code>--source sim_camera.png --sim-calib</code></p>
     </div>
 
@@ -1282,19 +1290,22 @@ function detectBlobs(px) {
 function scanVision() {
   const px = captureTop();
   const blobs = detectBlobs(px);
+  blobs.forEach((b, i) => { b.id = i + 1; });               // numbers the VLM refers to
   camCtx.putImageData(camImg, 0, 0);
   camCtx.font = '600 10px -apple-system, sans-serif';
   for (const b of blobs) {
     const err = Math.min(...cubes.map(c => { const p = robotFromWorld(c.m.position); return Math.hypot(p.x - b.x, p.y - b.y); }));
     b.err = err;
-    camCtx.strokeStyle = '#fff'; camCtx.lineWidth = 2;
-    camCtx.beginPath(); camCtx.arc(b.u, b.v, 13, 0, Math.PI * 2); camCtx.stroke();
-    camCtx.beginPath(); camCtx.moveTo(b.u - 5, b.v); camCtx.lineTo(b.u + 5, b.v); camCtx.moveTo(b.u, b.v - 5); camCtx.lineTo(b.u, b.v + 5); camCtx.stroke();
-    camCtx.fillStyle = '#fff';
-    camCtx.fillText(`${b.x.toFixed(0)}, ${b.y.toFixed(0)}`, b.u + 16, b.v + 4);
+    camCtx.fillStyle = 'rgba(0,0,0,.75)';
+    camCtx.beginPath(); camCtx.arc(b.u, b.v, 9, 0, Math.PI * 2); camCtx.fill();
+    camCtx.strokeStyle = '#fff'; camCtx.lineWidth = 1.5; camCtx.stroke();
+    camCtx.fillStyle = '#fff'; camCtx.textAlign = 'center';
+    camCtx.fillText(String(b.id), b.u, b.v + 3.5);
+    camCtx.textAlign = 'left';
+    camCtx.fillText(`${b.x.toFixed(0)}, ${b.y.toFixed(0)}`, b.u + 13, b.v + 4);
   }
   $('#visList').innerHTML = blobs.length
-    ? blobs.map(b => `<span style="color:${b.css}">●</span> ${b.color} → (${b.x.toFixed(0)}, ${b.y.toFixed(0)}) mm <span style="color:var(--muted)">· คลาดเคลื่อน ${b.err.toFixed(1)} mm</span>`).join('<br>')
+    ? blobs.map(b => `<span style="color:${b.css}">●</span> #${b.id} ${b.color} → (${b.x.toFixed(0)}, ${b.y.toFixed(0)}) mm <span style="color:var(--muted)">· คลาดเคลื่อน ${b.err.toFixed(1)} mm</span>`).join('<br>')
     : 'ไม่พบวัตถุ';
   return blobs;
 }
@@ -1316,6 +1327,64 @@ $('#visPick').onclick = () => {
     .map(b => ({ x: b.x, y: b.y, z: CUBE / 2 }));
   if (!targets.length) { $('#visList').textContent = 'ไม่พบวัตถุที่ต้องหยิบ'; return; }
   stopPlayback(); program = buildDemo(targets); renderProgram(); startPlayback();
+};
+// typed command -> planner server (VLM or mock) -> show plan -> confirm -> run
+const PLANNER = 'http://localhost:8792';
+const esc = s => String(s).replace(/[&<>"]/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch]));
+let sayCmds = null;
+function commandsToPoses(cmds) {
+  let cur = tgt.slice();
+  const poses = [];
+  for (const c of cmds) {
+    if (c.stop) break;
+    if (c.home) cur = HOME.slice();
+    else if (c.grip !== undefined) cur[5] = clamp(+c.grip, JOINTS[5].min, JOINTS[5].max);
+    else if (c.ik) {
+      const r = autoIK(c.ik[0], c.ik[1], c.ik[2], c.ik[3] ?? -90, true);
+      if (!r) return null;
+      const yaw = theta(0, r.servos[0]);
+      const roll = ((yaw + 45) % 90 + 90) % 90 - 45;          // align fingers with cube faces
+      cur = [...r.servos, servoOf(4, roll), cur[5]];
+    }
+    poses.push({ j: cur.slice() });
+  }
+  return poses;
+}
+async function planSay() {
+  const out = $('#sayOut');
+  sayCmds = null;
+  $('#sayRun').disabled = true;
+  const objects = scanVision().map(b => ({ id: b.id, color: b.color, x: +b.x.toFixed(1), y: +b.y.toFixed(1), u: +b.u.toFixed(1), v: +b.v.toFixed(1) }));
+  out.className = 'status';
+  out.textContent = 'กำลังวางแผน…';
+  try {
+    const r = await fetch(PLANNER + '/plan', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: $('#sayText').value, objects, image: $('#camView').toDataURL('image/png') }),
+    });
+    const d = await r.json();
+    const steps = (d.plan?.steps || []).map((st, i) => `${i + 1}. ${esc(JSON.stringify(st))}`).join('<br>');
+    if (d.errors?.length) {
+      out.className = 'status bad';
+      out.innerHTML = `${esc(d.plan?.say || '')}<br>✗ ${d.errors.map(esc).join('<br>✗ ')}`;
+      return;
+    }
+    sayCmds = d.commands;
+    $('#sayRun').disabled = false;
+    out.className = 'status ok';
+    out.innerHTML = `<b>${esc(d.plan.say)}</b> <span style="color:var(--muted)">(${esc(d.planner)})</span><br>${steps}`;
+  } catch {
+    out.className = 'status bad';
+    out.innerHTML = 'ติดต่อ planner ไม่ได้ — รัน <code>python3 vlm/planner_server.py</code>';
+  }
+}
+$('#sayPlan').onclick = planSay;
+$('#sayText').addEventListener('keydown', e => { if (e.key === 'Enter') planSay(); });
+$('#sayRun').onclick = () => {
+  const poses = sayCmds && commandsToPoses(sayCmds);
+  if (!poses) { $('#sayOut').className = 'status bad'; $('#sayOut').textContent = 'เอื้อมไม่ถึงบางจุด — ไม่ทำ'; return; }
+  $('#sayRun').disabled = true;
+  stopPlayback(); program = poses; renderProgram(); startPlayback();
 };
 $('#visShuffle').onclick = () => {
   if (held) return;
