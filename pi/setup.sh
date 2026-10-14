@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Raspberry Pi 3 setup for robot_101 — run once on the Pi (Raspberry Pi OS Lite 64-bit, Bookworm):
+# Raspberry Pi 5 setup (Pi 3/4 should work too, untested) for robot_101 — run once on the Pi (Raspberry Pi OS Lite 64-bit):
 #   git clone https://github.com/atthaphonp1-bot/robot_101.git ~/robot_101
 #   bash ~/robot_101/pi/setup.sh
 # Installs: Mosquitto (password, :1883 for ESP32, :9001 WebSocket for browsers),
@@ -30,7 +30,7 @@ while true; do
 done
 
 # ---- packages -----------------------------------------------------------------
-say "ติดตั้งแพ็กเกจ (ใช้เวลาหลายนาทีบน Pi 3)"
+say "ติดตั้งแพ็กเกจ (ใช้เวลาสักครู่)"
 sudo apt-get update -q
 sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -q \
   mosquitto mosquitto-clients python3-opencv python3-numpy python3-websocket git

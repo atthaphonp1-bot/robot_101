@@ -25,7 +25,7 @@
     <svg viewBox="0 0 900 975" role="img" aria-label="ผังทั้งระบบ 5 ชั้น จากผู้ใช้ เครือข่าย firmware ESP32 ไดรเวอร์และไฟ ไปจนถึง servo 6 ตัวและข้อต่อของแขน">
       <!-- bands -->
       <rect class="band" x="10" y="10" width="880" height="122" rx="18"/><text class="bandlabel" x="24" y="32">1 · ผู้ใช้งาน</text>
-      <rect class="band" x="10" y="148" width="880" height="140" rx="18"/><text class="bandlabel" x="24" y="170">2 · เครือข่าย + Raspberry Pi 3</text>
+      <rect class="band" x="10" y="148" width="880" height="140" rx="18"/><text class="bandlabel" x="24" y="170">2 · เครือข่าย + Raspberry Pi 5</text>
       <rect class="band" x="10" y="304" width="880" height="252" rx="18"/><text class="bandlabel" x="24" y="326">3 · ESP32 firmware</text>
       <rect class="band" x="10" y="572" width="880" height="122" rx="18"/><text class="bandlabel" x="24" y="594">4 · ไดรเวอร์ + ไฟเลี้ยง</text>
       <rect class="band" x="10" y="710" width="880" height="255" rx="18"/><text class="bandlabel" x="24" y="732">5 · มอเตอร์ (servo) + ข้อต่อ</text>
@@ -80,7 +80,7 @@
       <!-- ===== band 2 ===== -->
       <rect class="blk" x="40" y="190" width="180" height="70" rx="14"/><text class="t" x="54" y="217">WiFi Router</text><text class="s" x="54" y="237">2.4 GHz วงบ้าน</text>
       <rect class="blk-hi" x="260" y="180" width="400" height="95" rx="16"/>
-      <text class="t" x="276" y="204">Raspberry Pi 3</text>
+      <text class="t" x="276" y="204">Raspberry Pi 5</text>
       <text class="m" x="276" y="228">Mosquitto :1883 / :9001</text>
       <text class="m" x="276" y="248">เว็บ :8080 · sim/ docs/</text>
       <text class="m" x="476" y="228">vision_pick.py</text>
@@ -102,7 +102,7 @@
       <rect class="blk" x="40" y="615" width="150" height="60" rx="14"/><text class="t" x="54" y="640">PSU servo</text><text class="s" x="54" y="660">5–6V 10A</text>
       <rect class="blk" x="220" y="615" width="110" height="60" rx="14" style="stroke:var(--c-red)"/><text class="t" x="234" y="640">E-STOP</text><text class="s" x="234" y="660">หน้าสัมผัส NC</text>
       <rect class="blk-hi" x="400" y="615" width="200" height="60" rx="14"/><text class="t" x="414" y="640">PCA9685</text><text class="s" x="414" y="660">16 ช่อง · V+ มี C 1000µF</text>
-      <rect class="blk" x="640" y="615" width="240" height="60" rx="14"/><text class="t" x="654" y="640">ไฟบอร์ด</text><text class="s" x="654" y="660">ESP32: USB 5V · Pi: 5V 2.5A · GND ร่วม</text>
+      <rect class="blk" x="640" y="615" width="240" height="60" rx="14"/><text class="t" x="654" y="640">ไฟบอร์ด</text><text class="s" x="654" y="660">ESP32: USB 5V · Pi: 5V 5A · GND ร่วม</text>
 
       <!-- ===== band 5: servos + joints ===== -->
       <g>

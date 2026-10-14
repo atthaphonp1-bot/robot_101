@@ -3,21 +3,21 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Raspberry Pi 3 Setup</title>
+<title>Raspberry Pi 5 Setup</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="docs.css">
 </head>
 <body>
 <main>
-  <div class="crumb"><a href="index.html">เอกสาร</a> › Raspberry Pi 3</div>
-  <p class="eyebrow">ระบบ · Raspberry Pi 3 / 5 + ESP32</p>
-  <h1>Pi 3 เป็นสมอง ESP32 คุมมอเตอร์</h1>
-  <p class="lede">ใช้ Raspberry Pi 3 ที่มีอยู่ทำงานหนัก (กล้อง, broker, เว็บ) ส่วน ESP32 ทำงานที่ต้องตรงเวลา (servo, E-STOP) — firmware เดิมใช้ได้ทันที</p>
+  <div class="crumb"><a href="index.html">เอกสาร</a> › Raspberry Pi 5</div>
+  <p class="eyebrow">ระบบ · Raspberry Pi 5 + ESP32</p>
+  <h1>Pi 5 เป็นสมอง ESP32 คุมมอเตอร์</h1>
+  <p class="lede">ใช้ Raspberry Pi 5 ทำงานหนัก (กล้อง, broker, เว็บ, VLM planner) ส่วน ESP32 ทำงานที่ต้องตรงเวลา (servo, E-STOP) — firmware เดิมใช้ได้ทันที</p>
 
   <h2>ผังระบบ</h2>
   <figure class="diagram" style="margin:0">
-    <svg viewBox="0 0 780 470" role="img" aria-label="ผังระบบ: มือถือเชื่อม Raspberry Pi 3 ผ่าน WiFi, Pi รัน Mosquitto เว็บ และ OpenCV พร้อมกล้อง USB, Pi ส่ง MQTT ไป ESP32 ซึ่งคุม PCA9685 และ servo 6 ตัว">
+    <svg viewBox="0 0 780 470" role="img" aria-label="ผังระบบ: มือถือเชื่อม Raspberry Pi 5 ผ่าน WiFi, Pi รัน Mosquitto เว็บ และ OpenCV พร้อมกล้อง USB, Pi ส่ง MQTT ไป ESP32 ซึ่งคุม PCA9685 และ servo 6 ตัว">
       <!-- links -->
       <path class="w blue" d="M180 70H262"/>
       <path class="w purple" d="M180 112H230V132H262"/>
@@ -34,7 +34,7 @@
       <text class="s" x="536" y="122">MQTT :1883</text>
       <text class="s" x="536" y="252">WebSocket :81</text>
       <text class="s" x="338" y="352">USB</text>
-      <text class="s" x="478" y="352">5V 2.5A</text>
+      <text class="s" x="478" y="352">5V 5A</text>
       <text class="s" x="688" y="228">I2C</text>
       <text class="s" x="688" y="342">PWM</text>
 
@@ -46,7 +46,7 @@
 
       <!-- pi -->
       <rect class="blk-hi" x="262" y="30" width="266" height="282" rx="22"/>
-      <text class="t" x="280" y="58">Raspberry Pi 3</text>
+      <text class="t" x="280" y="58">Raspberry Pi 5</text>
       <text class="s" x="280" y="76">Raspberry Pi OS Lite 64-bit</text>
       <rect class="blk" x="280" y="92" width="230" height="58" rx="12"/>
       <text class="t" x="294" y="116">Mosquitto broker</text>
@@ -62,7 +62,7 @@
       <rect class="blk" x="262" y="375" width="136" height="60" rx="14"/>
       <text class="t" x="276" y="400">กล้อง USB</text><text class="s" x="276" y="418">webcam ทั่วไป</text>
       <rect class="blk" x="410" y="375" width="118" height="60" rx="14"/>
-      <text class="t" x="424" y="400">Adapter Pi</text><text class="s" x="424" y="418">micro-USB</text>
+      <text class="t" x="424" y="400">Adapter Pi</text><text class="s" x="424" y="418">USB-C 27W</text>
 
       <!-- esp32 chain -->
       <rect class="blk" x="610" y="90" width="150" height="106" rx="16"/>
@@ -85,23 +85,23 @@
     </div>
   </figure>
 
-  <h2>Pi 3 ทำอะไรได้แค่ไหน</h2>
+  <h2>Pi 5 ทำอะไรได้แค่ไหน</h2>
   <table>
-    <tr><th>งาน</th><th>Pi 3</th><th>หมายเหตุ</th></tr>
+    <tr><th>งาน</th><th>Pi 5</th><th>หมายเหตุ</th></tr>
     <tr><td>Mosquitto MQTT broker</td><td><span class="tag ok">สบาย</span></td><td>broker ของเราเอง ไม่ต้องใช้ broker สาธารณะ</td></tr>
     <tr><td>เว็บ Simulator + แดชบอร์ดมือถือ</td><td><span class="tag ok">สบาย</span></td><td>เปิดจากมือถือในวง WiFi เดียวกัน</td></tr>
-    <tr><td>OpenCV หาวัตถุตามสี</td><td><span class="tag ok">ได้</span></td><td>ใช้ภาพเล็ก 320×240–640×480</td></tr>
+    <tr><td>OpenCV หาวัตถุตามสี</td><td><span class="tag ok">สบาย</span></td><td>ภาพเต็มความละเอียดได้ลื่น ๆ</td></tr>
     <tr><td>ส่งคำสั่งไป ESP32</td><td><span class="tag ok">ได้</span></td><td>MQTT (แนะนำ), WebSocket หรือสาย USB</td></tr>
-    <tr><td>YOLO / AI หนัก</td><td><span class="tag bad">ช้าเกิน</span></td><td>RAM 1GB, CPU รุ่นเก่า</td></tr>
+    <tr><td>YOLO รุ่นเล็ก / VLM บนเครื่อง</td><td><span class="tag warn">ได้แต่ช้า</span></td><td>ใช้ได้กับรุ่น 8GB · VLM บน cloud เร็วและแม่นกว่า</td></tr>
     <tr><td>คุม servo เองโดยตรง</td><td><span class="tag warn">ได้แต่ไม่แนะนำ</span></td><td>Linux ไม่ real-time ให้ ESP32 คุมนิ่งกว่า</td></tr>
   </table>
 
   <h2>สิ่งที่ต้องเตรียม</h2>
   <div class="grid">
     <div class="card"><h3>microSD 16–32GB</h3><p>เขียน Raspberry Pi OS Lite (64-bit) ด้วย Raspberry Pi Imager — ตั้ง WiFi, SSH, user/รหัสผ่านไว้ตอนเขียนได้เลย ไม่ต้องต่อจอ</p></div>
-    <div class="card"><h3>Adapter 5V 2.5A</h3><p>หัว micro-USB ของแท้ ไฟไม่พอ Pi จะรีบูตเองตอนเปิดกล้อง · แยกจากไฟ servo แต่ GND ต่อร่วมเหมือนเดิม</p></div>
+    <div class="card"><h3>Adapter USB-C 5V 5A</h3><p>ตัว official 27W ไฟไม่พอ Pi จะรีบูตเองตอนเปิดกล้อง · แยกจากไฟ servo แต่ GND ต่อร่วมเหมือนเดิม</p></div>
     <div class="card"><h3>กล้อง USB</h3><p>ใช้กับ <code>vision_pick.py</code> ได้ทันที · Pi Camera (สายแพ) ใช้ได้แต่ต้องแก้โค้ดเป็น <code>picamera2</code></p></div>
-    <div class="card"><h3>WiFi 2.4 GHz</h3><p>Pi 3 และ ESP32 รองรับแค่ 2.4 GHz — ให้อยู่วงเดียวกันทั้งคู่</p></div>
+    <div class="card"><h3>WiFi 2.4 GHz</h3><p>ESP32 รองรับแค่ 2.4 GHz (Pi 5 ใช้ได้ทั้ง 2.4/5 GHz) — ให้อยู่ router เดียวกัน</p></div>
   </div>
 
   <div class="note"><b>Raspberry Pi 5:</b> ใช้ adapter USB-C <b>5V 5A</b> (27W) · ใส่ Active Cooler · Pi Camera ต้องใช้สายแบบ Pi 5 (22-pin → 15-pin) ส่วนกล้อง USB ใช้ได้เหมือนเดิม · ขา GPIO/UART ใช้ตามหน้าต่อสายเดิมได้</div>
@@ -109,7 +109,7 @@
   <h2>ขั้นตอน</h2>
   <ol class="steps">
     <li><b>ติดตั้ง Raspberry Pi Imager บน Mac</b><p>ดาวน์โหลดจาก <a href="https://www.raspberrypi.com/software/">raspberrypi.com/software</a> — เขียน OS ลง microSD ให้ในขั้นตอนเดียว</p></li>
-    <li><b>เลือกบอร์ดและ OS</b><p>Choose Device → <b>Raspberry Pi 5</b> (หรือ Pi 3) · Choose OS → Raspberry Pi OS (other) → <b>Raspberry Pi OS Lite (64-bit)</b> · Choose Storage → microSD (32GB ขึ้นไป)</p>
+    <li><b>เลือกบอร์ดและ OS</b><p>Choose Device → <b>Raspberry Pi 5</b> Choose OS → Raspberry Pi OS (other) → <b>Raspberry Pi OS Lite (64-bit)</b> · Choose Storage → microSD (32GB ขึ้นไป)</p>
       <p>ใช้ Lite (ไม่มีหน้าจอ) ให้ RAM/CPU เหลือไว้ให้ OpenCV และ VLM · เลือกแบบมี Desktop เฉพาะถ้าจะต่อจอใช้งาน · อย่าใช้ 32-bit</p></li>
     <li><b>ตั้งค่าก่อนเขียน (Edit Settings)</b><p>Hostname <code>robotpi</code> · Username/Password ของคุณเอง · WiFi บ้าน (วงเดียวกับ ESP32) Country = TH · Locale Asia/Bangkok · แท็บ Services → <b>Enable SSH</b></p></li>
     <li><b>เขียนแล้วเปิดเครื่อง</b><p>กด Write รอเสร็จ → ใส่การ์ดใน Pi → เสียบไฟ (Pi 5 ใช้ USB-C 5V 5A) → รอ 1–2 นาที</p></li>
