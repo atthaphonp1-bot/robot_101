@@ -11,7 +11,7 @@
 <body>
 <main>
   <div class="crumb"><a href="index.html">เอกสาร</a> › Raspberry Pi 3</div>
-  <p class="eyebrow">ระบบ · Raspberry Pi 3 + ESP32</p>
+  <p class="eyebrow">ระบบ · Raspberry Pi 3 / 5 + ESP32</p>
   <h1>Pi 3 เป็นสมอง ESP32 คุมมอเตอร์</h1>
   <p class="lede">ใช้ Raspberry Pi 3 ที่มีอยู่ทำงานหนัก (กล้อง, broker, เว็บ) ส่วน ESP32 ทำงานที่ต้องตรงเวลา (servo, E-STOP) — firmware เดิมใช้ได้ทันที</p>
 
@@ -104,9 +104,15 @@
     <div class="card"><h3>WiFi 2.4 GHz</h3><p>Pi 3 และ ESP32 รองรับแค่ 2.4 GHz — ให้อยู่วงเดียวกันทั้งคู่</p></div>
   </div>
 
+  <div class="note"><b>Raspberry Pi 5:</b> ใช้ adapter USB-C <b>5V 5A</b> (27W) · ใส่ Active Cooler · Pi Camera ต้องใช้สายแบบ Pi 5 (22-pin → 15-pin) ส่วนกล้อง USB ใช้ได้เหมือนเดิม · ขา GPIO/UART ใช้ตามหน้าต่อสายเดิมได้</div>
+
   <h2>ขั้นตอน</h2>
   <ol class="steps">
-    <li><b>เขียน OS ลง microSD</b><p>Raspberry Pi Imager → Raspberry Pi 3 → Raspberry Pi OS Lite (64-bit) → ตั้ง hostname <code>robotpi</code>, WiFi, เปิด SSH</p></li>
+    <li><b>ติดตั้ง Raspberry Pi Imager บน Mac</b><p>ดาวน์โหลดจาก <a href="https://www.raspberrypi.com/software/">raspberrypi.com/software</a> — เขียน OS ลง microSD ให้ในขั้นตอนเดียว</p></li>
+    <li><b>เลือกบอร์ดและ OS</b><p>Choose Device → <b>Raspberry Pi 5</b> (หรือ Pi 3) · Choose OS → Raspberry Pi OS (other) → <b>Raspberry Pi OS Lite (64-bit)</b> · Choose Storage → microSD (32GB ขึ้นไป)</p>
+      <p>ใช้ Lite (ไม่มีหน้าจอ) ให้ RAM/CPU เหลือไว้ให้ OpenCV และ VLM · เลือกแบบมี Desktop เฉพาะถ้าจะต่อจอใช้งาน · อย่าใช้ 32-bit</p></li>
+    <li><b>ตั้งค่าก่อนเขียน (Edit Settings)</b><p>Hostname <code>robotpi</code> · Username/Password ของคุณเอง · WiFi บ้าน (วงเดียวกับ ESP32) Country = TH · Locale Asia/Bangkok · แท็บ Services → <b>Enable SSH</b></p></li>
+    <li><b>เขียนแล้วเปิดเครื่อง</b><p>กด Write รอเสร็จ → ใส่การ์ดใน Pi → เสียบไฟ (Pi 5 ใช้ USB-C 5V 5A) → รอ 1–2 นาที</p></li>
     <li><b>SSH เข้า Pi</b><p><code>ssh &lt;user&gt;@robotpi.local</code></p></li>
     <li><b>ติดตั้ง Mosquitto + OpenCV + เว็บ</b><p>รันครั้งเดียวบน Pi — จะถามชื่อ/รหัส MQTT แล้วติดตั้งทุกอย่าง เปิดเว็บอัตโนมัติตอนบูต และสรุปค่าที่ต้องใส่ใน firmware ตอนจบ</p>
 <pre><code>sudo apt-get install -y git
