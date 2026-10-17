@@ -121,7 +121,7 @@ class Arm:
         return self.send({"speed": value})
 
     def stop(self) -> Dict[str, Any]:
-        return self.send({"stop": 1})
+        return self._exchange({"stop": 1})   # no heartbeat in front: STOP must not wait for anything
 
     def status(self) -> Dict[str, Any]:
         return self.send({"status": 1})

@@ -74,7 +74,7 @@ class Handler(BaseHTTPRequestHandler):
     def do_POST(self):
         if self.path != "/plan":
             return self._send(404, {"error": "not found"})
-        if TOKEN and not hmac.compare_digest(self.headers.get("X-Planner-Token", ""), TOKEN):
+        if TOKEN and not hmac.compare_digest(self.headers.get("X-Planner-Token", "").encode("utf-8", "replace"), TOKEN.encode()):
             return self._send(401, {"error": "bad or missing X-Planner-Token"})
         try:
             length = int(self.headers.get("Content-Length", 0))

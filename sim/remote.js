@@ -191,6 +191,7 @@ function initUI() {
     document.getElementById('connectBtn').addEventListener('click', () => {
         if (client) {
             client.end(true);
+            document.getElementById('topicPrefix').readOnly = false;
             client = null;
             document.getElementById('connectBtn').textContent = 'เชื่อมต่อ';
             log('ตัดการเชื่อมต่อ');
@@ -212,6 +213,7 @@ function initUI() {
 
         saveConfig();
 
+        document.getElementById('topicPrefix').readOnly = true;   // hb/STOP topic fixed while connected
         client = window.mqtt.connect(url, {
             clientId: 'remote-' + Math.random().toString(16).slice(2, 10),
             clean: true,

@@ -1147,7 +1147,7 @@ function queueSend() {
   }, 50);
 }
 $('#mqBtn').onclick = () => {
-  if (mq) { mq.end(true); mq = null; armOnline = false; $('#mqBtn').textContent = 'เชื่อมต่อ'; log('MQTT ตัดการเชื่อมต่อ', 'err'); return; }
+  if (mq) { mq.end(true); mq = null; armOnline = false; $('#mqPrefix').readOnly = false; $('#mqBtn').textContent = 'เชื่อมต่อ'; log('MQTT ตัดการเชื่อมต่อ', 'err'); return; }
   if (!window.mqtt) { log('✗ โหลด mqtt.js ไม่ได้', 'err'); return; }
   const pfx = $('#mqPrefix').value.trim();
   if (!pfx || pfx.startsWith('robot101/')) { log('✗ ใส่ prefix เฉพาะของคุณ (ต้องตรงกับ MQTT_PREFIX ใน firmware)', 'err'); return; }
@@ -1155,6 +1155,7 @@ $('#mqBtn').onclick = () => {
   const opts = { clientId: 'sim-' + Math.random().toString(16).slice(2, 10), clean: true, reconnectPeriod: 3000 };
   if ($('#mqUser').value) { opts.username = $('#mqUser').value; opts.password = $('#mqPass').value; }
   mq = mqtt.connect($('#mqUrl').value.trim(), opts);
+  $('#mqPrefix').readOnly = true;   // topic is fixed for the life of this connection
   $('#mqBtn').textContent = 'กำลังต่อ…';
   mq.on('connect', () => {
     $('#mqBtn').textContent = 'ตัดการเชื่อมต่อ';

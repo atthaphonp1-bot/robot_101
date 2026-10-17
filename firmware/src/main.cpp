@@ -133,6 +133,7 @@ String handleCommand(const char* txt) {
     JsonArray k = d["ik"];
     if (k.size() < 3 || !k[0].is<float>() || !k[1].is<float>() || !k[2].is<float>()) return "{\"err\":\"ik needs x,y,z\"}";
     float o[4];
+    if (k.size() > 3 && !k[3].is<float>()) return "{\"err\":\"ik pitch must be a number\"}";
     float pitch = k.size() > 3 ? k[3].as<float>() : -90;
     bool search = !(k.size() > 4 && k[4].as<int>() == 0);   // 5th value 0 = use exactly this pitch (like the sim)
     if (!(search ? autoIK(k[0], k[1], k[2], pitch, o) : solveIK(k[0], k[1], k[2], pitch, o))) return "{\"err\":\"unreachable\"}";
@@ -215,13 +216,19 @@ void mqttLoop() {
   if (mqtt.connected()) { mqtt.loop(); return; }
   static uint32_t lastTry = 0, backoff = 3000;                   // 3 s -> 30 s while the broker is down
   if (lastTry && millis() - lastTry < backoff) return;
+  for (int i = 0; i < 6; i++) if (fabsf(tgt[i] - cur[i]) > 0.5f) return;   // never block the loop mid-move
   lastTry = millis();
+  if (!mqttNet.connect(MQTT_HOST, MQTT_PORT, 300)) {                      // quick reachability check (300 ms)
+    backoff = min<uint32_t>(backoff * 2, 30000);
+    Serial.printf("MQTT broker unreachable, retry in %lus\n", (unsigned long)(backoff / 1000));
+    return;
+  }
   String id = "arm-" + String((uint32_t)ESP.getEfuseMac(), HEX);
   String st = topic("status");
   if (mqtt.connect(id.c_str(), *MQTT_USER ? MQTT_USER : nullptr, *MQTT_PASS ? MQTT_PASS : nullptr,
                    st.c_str(), 1, true, "offline")) {          // last will: offline (retained)
     mqtt.publish(st.c_str(), "online", true);
-    mqtt.subscribe(topic("cmd").c_str());
+    mqtt.subscribe(topic("cmd").c_str(), 1);   // QoS 1 broker -> arm (STOP must arrive)
     Serial.printf("MQTT connected: %s/cmd\n", MQTT_PREFIX);
     backoff = 3000;
   } else {
@@ -307,7 +314,7 @@ void loop() {
       WiFi.softAPdisconnect(true);
       WiFi.mode(WIFI_STA);
       Serial.printf("WiFi reconnected, IP: %s\n", WiFi.localIP().toString().c_str());
-    } else if (millis() - lastWifiTry > 60000) {
+    } else if (millis() - lastWifiTry > 60000 && ws.connectedClients() == 0 && WiFi.softAPgetStationNum() == 0) {
       lastWifiTry = millis();
       WiFi.begin(WIFI_SSID, WIFI_PASS);
     }
@@ -331,7 +338,7 @@ void loop() {
     Serial.println("DEAD-MAN: no heartbeat, holding position");
   }
   if (now - lastMove >= 20) {
-    float dt = (now - lastMove) / 1000.0f;
+    float dt = min((now - lastMove) / 1000.0f, 0.05f);   // after a stall keep the normal speed, no jump
     lastMove = now;
     for (int i = 0; i < 6; i++) {
         float d = tgt[i] - cur[i], m = spd[i] * dt;
