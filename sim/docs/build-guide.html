@@ -7,6 +7,12 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="docs.css">
+<style>
+  .diagram .pin { fill: var(--text); font: 11px var(--mono); }
+  .w.c-3v3 { stroke: #ff9f0a; } .w.c-pwr { stroke: var(--c-red); } .w.c-gnd { stroke: var(--text); }
+  .w.c-sda { stroke: var(--c-blue); } .w.c-scl { stroke: var(--c-green); } .w.c-pwm { stroke: var(--c-purple); } .w.c-sig { stroke: #64d2ff; }
+  .diagram .dot { stroke: none; }
+</style>
 </head>
 <body>
 <main>
@@ -112,6 +118,113 @@
 
 <h2 id="wiring">2 · ต่อสาย ESP32</h2>
 <p>ดูผังเส้นสายที่ปุ่ม <b>วงจร</b> ใน <a href="../index.html">Simulator</a> ประกอบ</p>
+  <figure class="diagram" style="margin:16px 0">
+    <svg viewBox="0 0 760 400" role="img" aria-label="ขา ESP32 ที่ใช้ในโปรเจกต์และต่อไปที่ไหน">
+  <!-- Paths -->
+  <path class="w red" d="M244 110H150"/>
+  <path class="w gray" d="M244 150H150"/>
+  <path class="w blue" d="M244 190H150"/>
+  <path class="w green" d="M244 230H150"/>
+  <path class="w red" d="M456 110H560"/>
+  <path class="w purple" d="M456 190H560"/>
+  <path class="w blue" d="M456 230H560"/>
+  <path class="w gray" d="M380 375H560"/>
+  <!-- Shapes -->
+  <rect class="blk-hi" x="250" y="20" width="200" height="360" rx="18"/>
+  <rect class="blk" x="320" y="360" width="60" height="30" rx="6"/>
+  <circle class="blk" cx="250" cy="110" r="6"/>
+  <circle class="blk" cx="250" cy="150" r="6"/>
+  <circle class="blk" cx="250" cy="190" r="6"/>
+  <circle class="blk" cx="250" cy="230" r="6"/>
+  <circle class="blk" cx="450" cy="110" r="6"/>
+  <circle class="blk" cx="450" cy="190" r="6"/>
+  <circle class="blk" cx="450" cy="230" r="6"/>
+  <rect class="blk" x="20" y="94" width="130" height="32" rx="8"/>
+  <rect class="blk" x="20" y="134" width="130" height="32" rx="8"/>
+  <rect class="blk" x="20" y="174" width="130" height="32" rx="8"/>
+  <rect class="blk" x="20" y="214" width="130" height="32" rx="8"/>
+  <rect class="blk" x="560" y="94" width="180" height="32" rx="8"/>
+  <rect class="blk" x="560" y="174" width="180" height="32" rx="8"/>
+  <rect class="blk" x="560" y="214" width="180" height="32" rx="8"/>
+  <rect class="blk" x="560" y="359" width="180" height="32" rx="8"/>
+  <!-- Texts -->
+  <text class="t" x="350" y="50" text-anchor="middle">ESP32 DevKit V1</text>
+  <text class="s" x="350" y="68" text-anchor="middle">WROOM-32</text>
+  <text class="s" x="350" y="380" text-anchor="middle">USB</text>
+  <text class="m" x="262" y="110">3V3</text>
+  <text class="m" x="262" y="150">GND</text>
+  <text class="m" x="262" y="190">GPIO21 SDA</text>
+  <text class="m" x="262" y="230">GPIO22 SCL</text>
+  <text class="s" x="30" y="115">PCA+OLED VCC</text>
+  <text class="s" x="30" y="155">GND ร่วมทุกตัว</text>
+  <text class="s" x="30" y="195">PCA+OLED SDA</text>
+  <text class="s" x="30" y="235">PCA+OLED SCL</text>
+  <text class="m" x="438" y="110" text-anchor="end">GPIO4</text>
+  <text class="m" x="438" y="190" text-anchor="end">GPIO16 RX2</text>
+  <text class="m" x="438" y="230" text-anchor="end">GPIO17 TX2</text>
+  <text class="s" x="570" y="115">E-STOP (NO) → GND</text>
+  <text class="s" x="570" y="195">Pi Pin 8 TXD (ทาง UART)</text>
+  <text class="s" x="570" y="235">Pi Pin 10 RXD (ทาง UART)</text>
+  <text class="s" x="570" y="380">Raspberry Pi 5 (ไฟ + Serial)</text>
+  <text class="s" x="350" y="300" text-anchor="middle">ดูชื่อขาที่พิมพ์บนบอร์ด</text>
+  <text class="s" x="350" y="318" text-anchor="middle">ตำแหน่งขาต่างกันตามยี่ห้อ</text>
+</svg>
+    <p class="s" style="margin:10px 4px 0;color:var(--muted);font-size:13px">ขา ESP32 ที่ใช้ในโปรเจกต์ — ดูชื่อขาที่พิมพ์บนบอร์ดจริง ตำแหน่งขาแต่ละยี่ห้อไม่เหมือนกัน</p>
+  </figure>
+  <figure class="diagram" style="margin:16px 0">
+    <svg viewBox="0 0 720 470" role="img" aria-label="แผนผังต่อสาย ESP32, PCA9685, OLED, E-STOP, Power supply และ Servo 6 ตัว">
+  <!-- ESP32 -->
+  <rect class="blk" x="20" y="40" width="150" height="190" rx="14"/>
+  <text class="t" x="34" y="64">ESP32 DevKit</text><text class="s" x="34" y="82">WiFi · USB 5V</text>
+  <text class="pin" x="162" y="74" text-anchor="end">3V3</text><text class="pin" x="162" y="99" text-anchor="end">GND</text>
+  <text class="pin" x="162" y="124" text-anchor="end">GPIO21 SDA</text><text class="pin" x="162" y="149" text-anchor="end">GPIO22 SCL</text>
+  <text class="pin" x="162" y="174" text-anchor="end">GPIO4</text>
+  <!-- OLED -->
+  <rect class="blk" x="260" y="20" width="170" height="92" rx="12"/>
+  <text class="t" x="360" y="50" text-anchor="middle">OLED SSD1306</text><text class="s" x="360" y="68" text-anchor="middle">I2C 0x3C</text>
+  <text class="pin" x="268" y="39">VCC</text><text class="pin" x="268" y="59">GND</text>
+  <text class="pin" x="268" y="79">SCL</text><text class="pin" x="268" y="99">SDA</text>
+  <!-- PCA9685 -->
+  <rect class="blk" x="260" y="130" width="160" height="200" rx="14"/>
+  <text class="t" x="340" y="268" text-anchor="middle">PCA9685</text><text class="s" x="340" y="286" text-anchor="middle">16-ch PWM · I2C 0x40</text>
+  <text class="pin" x="268" y="154">VCC</text><text class="pin" x="268" y="179">GND</text>
+  <text class="pin" x="268" y="204">SDA</text><text class="pin" x="268" y="229">SCL</text>
+  <text class="pin" x="320" y="322" text-anchor="middle">V+</text><text class="pin" x="380" y="322" text-anchor="middle">GND</text>
+  <!-- PSU -->
+  <rect class="blk" x="20" y="290" width="150" height="90" rx="14"/>
+  <text class="t" x="34" y="314">Power Supply</text><text class="s" x="34" y="332">5–6V 10A (servo)</text>
+  <text class="pin" x="162" y="319" text-anchor="end">+</text><text class="pin" x="162" y="359" text-anchor="end">−</text>
+  <!-- E-STOP -->
+  <rect class="blk" x="230" y="404" width="70" height="34" rx="10"/>
+  <text class="t" x="265" y="426" text-anchor="middle" style="fill:#ff453a">E-STOP</text>
+
+  <!-- I2C + logic power (3V3) -->
+  <path class="w c-3v3" d="M170 70H205V35H260M205 70V150H260"/>
+  <path class="w c-gnd" d="M170 95H215V55H260M215 95V175H260M215 175V450"/>
+  <path class="w c-sda" d="M170 120H225V95H260M225 120V200H260"/>
+  <path class="w c-scl" d="M170 145H235V75H260M235 145V225H260"/>
+  <!-- servo power through E-STOP + capacitor -->
+  <path class="w c-pwr" d="M170 315H185V420H230M300 420H320V330M320 365H350V384"/>
+  <path class="w c-gnd" d="M170 355H175V450H380V330M350 394V450"/>
+  <path class="w c-gnd" d="M338 384H362M338 394H362"/>
+  <text class="s" x="368" y="393">C 1000µF</text>
+  <!-- E-STOP sense -->
+  <path class="w c-sig" d="M170 170H195V395H265V404"/>
+  <g class="dot"><circle cx="205" cy="70" r="3.5" fill="#ff9f0a"/><circle cx="215" cy="95" r="3.5" fill="currentColor"/>
+    <circle cx="225" cy="120" r="3.5" fill="#0a84ff"/><circle cx="235" cy="145" r="3.5" fill="#30d158"/>
+    <circle cx="320" cy="365" r="3.5" fill="#ff453a"/><circle cx="215" cy="450" r="3.5" fill="currentColor"/><circle cx="350" cy="450" r="3.5" fill="currentColor"/></g>
+  <text class="s" x="232" y="462">GND ร่วม (ESP32 + PSU + PCA9685)</text>
+  <text class="pin" x="414" y="154" text-anchor="end">CH0</text><path class="w c-pwm" d="M420 145H520"/><path class="w c-pwr" d="M420 150H520"/><path class="w c-gnd" d="M420 155H520"/><rect class="blk" x="520" y="138" width="180" height="24" rx="8"/><text class="pin" x="532" y="154">J1 ฐานหมุน</text><text class="s" x="690" y="154" text-anchor="end">MG996R</text><text class="pin" x="414" y="184" text-anchor="end">CH1</text><path class="w c-pwm" d="M420 175H520"/><path class="w c-pwr" d="M420 180H520"/><path class="w c-gnd" d="M420 185H520"/><rect class="blk" x="520" y="168" width="180" height="24" rx="8"/><text class="pin" x="532" y="184">J2 ไหล่</text><text class="s" x="690" y="184" text-anchor="end">MG996R</text><text class="pin" x="414" y="214" text-anchor="end">CH2</text><path class="w c-pwm" d="M420 205H520"/><path class="w c-pwr" d="M420 210H520"/><path class="w c-gnd" d="M420 215H520"/><rect class="blk" x="520" y="198" width="180" height="24" rx="8"/><text class="pin" x="532" y="214">J3 ศอก</text><text class="s" x="690" y="214" text-anchor="end">MG996R</text><text class="pin" x="414" y="244" text-anchor="end">CH3</text><path class="w c-pwm" d="M420 235H520"/><path class="w c-pwr" d="M420 240H520"/><path class="w c-gnd" d="M420 245H520"/><rect class="blk" x="520" y="228" width="180" height="24" rx="8"/><text class="pin" x="532" y="244">J4 ข้อมือก้ม-เงย</text><text class="s" x="690" y="244" text-anchor="end">MG996R</text><text class="pin" x="414" y="274" text-anchor="end">CH4</text><path class="w c-pwm" d="M420 265H520"/><path class="w c-pwr" d="M420 270H520"/><path class="w c-gnd" d="M420 275H520"/><rect class="blk" x="520" y="258" width="180" height="24" rx="8"/><text class="pin" x="532" y="274">J5 ข้อมือหมุน</text><text class="s" x="690" y="274" text-anchor="end">MG996R</text><text class="pin" x="414" y="304" text-anchor="end">CH5</text><path class="w c-pwm" d="M420 295H520"/><path class="w c-pwr" d="M420 300H520"/><path class="w c-gnd" d="M420 305H520"/><rect class="blk" x="520" y="288" width="180" height="24" rx="8"/><text class="pin" x="532" y="304">J6 กริปเปอร์</text><text class="s" x="690" y="304" text-anchor="end">MG996R</text>
+  <text class="s" x="520" y="345">สาย servo: ม่วง = สัญญาณ · แดง = V+ · ดำ = GND</text>
+</svg>
+    <div class="legend">
+      <span><i style="background:#ff9f0a"></i>3V3 ลอจิก</span><span><i style="background:#ff453a"></i>5–6V servo</span>
+      <span><i style="background:var(--text)"></i>GND</span><span><i style="background:#0a84ff"></i>SDA</span>
+      <span><i style="background:#30d158"></i>SCL</span><span><i style="background:#bf5af2"></i>PWM</span><span><i style="background:#64d2ff"></i>E-STOP sense</span>
+    </div>
+    <p class="s" style="margin:10px 4px 0;color:var(--muted);font-size:13px">ผังต่อสายทั้งหมด: ESP32 · PCA9685 · OLED · E-STOP · ไฟ servo แยก · servo 6 ตัว (จุด = สายที่ต่อถึงกันจริง)</p>
+  </figure>
+
 <table>
   <thead>
     <tr>
@@ -230,6 +343,48 @@
 
 <h2 id="home">4 · ตั้ง Home และประกอบแขน</h2>
 <p>สำคัญที่สุดของการประกอบ — ใส่ horn ตอน servo อยู่ท่า Home แล้ว มุมใน Simulator จะตรงกับแขนจริง</p>
+  <figure class="diagram" style="margin:16px 0">
+    <svg viewBox="0 0 760 380" role="img" aria-label="ท่า Home ของแขน มองจากด้านข้างและด้านบน พร้อมมุม servo ทุกข้อ">
+  <!-- Paths -->
+  <path class="w gray" d="M20 340H470"/>
+  <path class="w blue" d="M150 250V130"/>
+  <path class="w blue" d="M150 130H265"/>
+  <path class="w blue" d="M265 130L322 187"/>
+  <path class="w purple" d="M312 197L300 225"/>
+  <path class="w purple" d="M332 177L360 190"/>
+  <path class="w gray dash" d="M150 130V60"/>
+  <path class="w gray dash" d="M265 130H360"/>
+  <path class="w blue" d="M600 200H720"/>
+  <path class="w gray dash" d="M600 200V90"/>
+  <!-- Shapes -->
+  <rect class="blk" x="110" y="300" width="80" height="40" rx="8"/>
+  <circle class="blk-hi" cx="150" cy="250" r="9"/>
+  <circle class="blk-hi" cx="150" cy="130" r="9"/>
+  <circle class="blk-hi" cx="265" cy="130" r="9"/>
+  <circle class="blk" cx="600" cy="200" r="50"/>
+  <circle class="blk-hi" cx="600" cy="200" r="9"/>
+  <!-- Texts -->
+  <text class="t" x="20" y="28">มองด้านข้าง</text>
+  <text class="t" x="40" y="250">J2 ไหล่ 90°</text>
+  <text class="s" x="40" y="268">แขนท่อนบนตั้งตรง</text>
+  <text class="t" x="110" y="100">J3 ศอก 135°</text>
+  <text class="s" x="110" y="118">แขนท่อนล่างขนานพื้น</text>
+  <text class="t" x="280" y="110">J4 ข้อมือ 135°</text>
+  <text class="s" x="370" y="135">ก้มลง 45°</text>
+  <text class="t" x="330" y="240">J6 กริปเปอร์ 80°</text>
+  <text class="s" x="330" y="258">เปิดครึ่งทาง</text>
+  <text class="s" x="40" y="360">ฐาน (หน้าแขน = แกน X ไปทางขวา)</text>
+  <text class="t" x="520" y="28">มองจากด้านบน</text>
+  <text class="t" x="530" y="290">J1 ฐานหมุน 90°</text>
+  <text class="s" x="530" y="308">แขนชี้ไปด้านหน้า (X)</text>
+  <text class="s" x="690" y="190">X →</text>
+  <text class="s" x="608" y="96">Y (ซ้าย)</text>
+  <text class="t" x="530" y="340">J5 ข้อมือหมุน 90°</text>
+  <text class="s" x="530" y="358">นิ้วอยู่แนวเดียวกับแขน</text>
+</svg>
+    <p class="s" style="margin:10px 4px 0;color:var(--muted);font-size:13px">ท่า Home: ใส่ horn ตอน servo อยู่ที่มุมเหล่านี้ แล้วจัดแขนให้เป็นท่านี้</p>
+  </figure>
+
 <table>
   <tr><th>ข้อ</th><th>มุม servo ท่า Home</th><th>ท่าทางที่ต้องจัดให้ตรง</th></tr>
   <tr><td>J1 ฐานหมุน</td><td>90°</td><td>แขนหันไปด้านหน้า (แกน X)</td></tr>
@@ -274,6 +429,102 @@
     <pre><code>sudo usermod -aG dialout $USER</code></pre>
   </li>
 </ol>
+
+  <figure class="diagram" style="margin:16px 0">
+    <svg viewBox="0 0 900 560" role="img" aria-label="ผังต่อสาย Raspberry Pi 5 กับ ESP32: ทางสาย USB, ทาง UART ผ่าน GPIO, กล้อง, ไฟเลี้ยง และ PCA9685">
+  <!-- Paths (drawn first) -->
+  <path class="w gray" d="M324 202H576"/>
+  <path class="w purple" d="M324 232H576"/>
+  <path class="w blue" d="M324 262H576"/>
+  <path class="w green" d="M190 325H470V298H600"/>
+  <path class="w gray" d="M115 350V360H220V490H250"/>
+  <path class="w red" d="M115 425V465"/>
+  <path class="w green dash" d="M730 330V420"/>
+
+  <!-- Board outlines -->
+  <rect class="blk-hi" x="20" y="30" width="300" height="420" rx="20"/>
+  <rect class="blk-hi" x="580" y="30" width="300" height="300" rx="20"/>
+  <rect class="blk" x="580" y="420" width="300" height="95" rx="14"/>
+
+  <!-- Pi sub‑components -->
+  <rect class="blk" x="40" y="300" width="150" height="50" rx="12"/>
+  <rect class="blk" x="40" y="375" width="150" height="50" rx="12"/>
+
+  <!-- ESP32 sub‑components -->
+  <rect class="blk" x="600" y="280" width="160" height="36" rx="10"/>
+
+  <!-- Webcam and Adapter -->
+  <rect class="blk" x="250" y="465" width="150" height="50" rx="12"/>
+  <rect class="blk" x="40" y="465" width="150" height="50" rx="12"/>
+
+  <!-- Pin dots -->
+  <circle class="blk" cx="320" cy="112" r="4"/>
+  <circle class="blk" cx="320" cy="142" r="4"/>
+  <circle class="blk" cx="320" cy="172" r="4"/>
+  <circle class="blk" cx="320" cy="202" r="4"/>
+  <circle class="blk" cx="320" cy="232" r="4"/>
+  <circle class="blk" cx="320" cy="262" r="4"/>
+
+  <circle class="blk" cx="580" cy="202" r="4"/>
+  <circle class="blk" cx="580" cy="232" r="4"/>
+  <circle class="blk" cx="580" cy="262" r="4"/>
+
+  <!-- Text labels -->
+  <!-- Pi board -->
+  <text class="t" x="38" y="60">Raspberry Pi 5</text>
+  <text class="s" x="38" y="80">GPIO 40 ขา</text>
+
+  <!-- Pi GPIO pins -->
+  <text class="m" x="40" y="116">Pin 1 · 3V3</text>
+  <text class="m" x="40" y="146">Pin 3 · GPIO2 SDA</text>
+  <text class="m" x="40" y="176">Pin 5 · GPIO3 SCL</text>
+  <text class="m" x="40" y="206">Pin 6 · GND</text>
+  <text class="m" x="40" y="236">Pin 8 · GPIO14 TXD</text>
+  <text class="m" x="40" y="266">Pin 10 · GPIO15 RXD</text>
+
+  <!-- Pi USB / Power -->
+  <text class="t" x="54" y="330">USB‑A ×4</text>
+  <text class="t" x="54" y="398">micro‑USB</text>
+  <text class="s" x="54" y="414">ไฟเข้า Pi</text>
+
+  <!-- ESP32 board -->
+  <text class="t" x="598" y="60">ESP32 DevKit V1</text>
+  <text class="s" x="598" y="80">WROOM‑32</text>
+
+  <!-- ESP32 pins -->
+  <text class="m" x="592" y="206">GND</text>
+  <text class="m" x="592" y="236">GPIO16 RX2</text>
+  <text class="m" x="592" y="266">GPIO17 TX2</text>
+
+  <!-- ESP32 USB -->
+  <text class="s" x="612" y="303">USB (micro / Type‑C)</text>
+
+  <!-- Webcam -->
+  <text class="t" x="264" y="488">กล้อง USB</text>
+  <text class="s" x="264" y="504">เสียบ Pi</text>
+
+  <!-- Pi adapter -->
+  <text class="t" x="54" y="488">Adapter 5V 5A</text>
+  <text class="s" x="54" y="504">ไฟ Pi เท่านั้น</text>
+
+  <!-- PCA9685 -->
+  <text class="t" x="598" y="446">PCA9685 + Servo</text>
+  <text class="s" x="598" y="466">ไฟ servo แยก 5–6V 10A</text>
+  <text class="s" x="598" y="486">ห้ามดึงไฟ servo จาก Pi / ESP32</text>
+  <text class="s" x="598" y="504">ดูหน้า: วงจร (Simulator)</text>
+
+  <!-- Path labels -->
+  <text class="s" x="420" y="196">GND ร่วม</text>
+  <text class="s" x="400" y="226">TXD → RX2</text>
+  <text class="s" x="400" y="256">RXD ← TX2</text>
+  <text class="s" x="300" y="318">ทาง A: สาย USB = ไฟ + Serial</text>
+  <text class="s" x="738" y="380">I2C GPIO21/22</text>
+
+  <!-- Caption -->
+  <text class="s" x="440" y="150" text-anchor="middle">ทาง B: UART ผ่าน GPIO</text>
+</svg>
+    <p class="s" style="margin:10px 4px 0;color:var(--muted);font-size:13px">ต่อ ESP32 เข้า Pi 5: ทาง A สาย USB (แนะนำ) หรือทาง B UART ผ่าน GPIO — รายละเอียดใน <a href="pi-wiring.html">หน้าต่อสาย Pi ↔ ESP32</a></p>
+  </figure>
 
 <h2 id="test">6 · ทดสอบทีละชั้น</h2>
 <p>ทำตามลำดับ ผ่านข้อหนึ่งค่อยไปข้อถัดไป</p>
