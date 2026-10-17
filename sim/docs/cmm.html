@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Measuring Arm Accuracy</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="docs.css">
+    <style>
+        .calc .field{margin-bottom:12px}
+        .calc label{display:block;font-size:13px;color:var(--muted);margin-bottom:4px}
+        .calc input,.calc select{width:100%;box-sizing:border-box;font:inherit;padding:10px 12px;border:0;border-radius:12px;background:var(--fill);color:var(--text)}
+        .out{font-size:28px;font-weight:700;letter-spacing:-.02em}
+        .bar{height:10px;border-radius:5px;margin:4px 0 10px}
+    </style>
+</head>
+<body>
+    <main>
+        <div class="crumb"><a href="index.html">เอกสาร</a> › แขนวัดแบบ CMM</div>
+        <p class="eyebrow">การวัด · ความแม่นยำ</p>
+        <h1>ทำแขนกลเป็นเครื่องวัดได้แม่นแค่ไหน</h1>
+        <p class="lede">แขนตอนนี้ (servo MG996R) วัดได้ประมาณ <b>±1 ซม.</b> — ถ้าสร้างแขนวัดแบบ passive ที่ใช้ encoder จะได้ประมาณ <b>0.2–1 มม.</b></p>
+
+        <h2>เครื่องคำนวณ</h2>
+        <div class="grid">
+            <div class="card calc">
+                <form id="calc">
+                    <div class="field">
+                        <label for="r1">ฐานหมุน → ปลาย (มม.)</label>
+                        <input type="number" id="r1" min="0" step="1" value="300">
+                    </div>
+                    <div class="field">
+                        <label for="r2">ไหล่ → ปลาย (มม.)</label>
+                        <input type="number" id="r2" min="0" step="1" value="330">
+                    </div>
+                    <div class="field">
+                        <label for="r3">ศอก → ปลาย (มม.)</label>
+                        <input type="number" id="r3" min="0" step="1" value="210">
+                    </div>
+                    <div class="field">
+                        <label for="r4">ข้อมือ → ปลาย (มม.)</label>
+                        <input type="number" id="r4" min="0" step="1" value="95">
+                    </div>
+                    <div class="field">
+                        <label for="enc">ตัวอ่านมุม</label>
+                        <select id="enc"></select>
+                    </div>
+                    <div class="field">
+                        <label for="encCustom">ความละเอียด (°)</label>
+                        <input type="number" id="encCustom" step="any" value="0.01">
+                    </div>
+                    <div class="field">
+                        <label for="mech">ความคลาดเคลื่อนกลไก เช่น ลูกปืน/แขนงอ (มม.)</label>
+                        <input type="number" id="mech" step="0.01" min="0" value="0.1">
+                    </div>
+                    <div class="field">
+                        <label for="dT">อุณหภูมิเปลี่ยน (°C)</label>
+                        <input type="number" id="dT" step="0.5" value="2">
+                    </div>
+                </form>
+            </div>
+            <div class="card calc">
+                <p class="muted">ความคลาดเคลื่อนรวม (ประมาณ)</p>
+                <div class="out" id="outTotal">—</div>
+                <p id="outVerdict"></p>
+                <table>
+                    <tr><td>ความละเอียดมุม</td><td><span id="outStep"></span></td></tr>
+                    <tr><td>จาก encoder (RSS)</td><td><span id="outRss"></span></td></tr>
+                    <tr><td>แย่สุด (บวกทุกข้อ)</td><td><span id="outWorst"></span></td></tr>
+                    <tr><td>จากอุณหภูมิ</td><td><span id="outThermal"></span></td></tr>
+                </table>
+                <div id="bars" style="margin-top:14px"></div>
+            </div>
+        </div>
+        <p class="lede" style="font-size:14px">สูตร: ความคลาดเคลื่อนที่ปลาย ≈ √Σ(Lᵢ · Δθ)² · รวมกับกลไกและอุณหภูมิแบบ RSS · เป็นการประมาณทางวิศวกรรม ต้องยืนยันด้วยการทดสอบจริง</p>
+
+        <h2>เทียบตัวอ่านมุม</h2>
+        <table>
+            <tr><th>การอ่านมุม</th><th>ความละเอียด</th><th>ความคลาดเคลื่อนที่ปลายแขน</th></tr>
+            <tr><td>MG996R (แบบตอนนี้)</td><td>~1°</td><td>~9 มม. (แย่สุด ~16 มม.)</td></tr>
+            <tr><td>PCA9685 step</td><td>0.44°</td><td>~4 มม.</td></tr>
+            <tr><td>AS5600 12-bit</td><td>0.088°</td><td>~0.8 มม. (จริง 1–2 มม.)</td></tr>
+            <tr><td>AS5047P 14-bit</td><td>0.022°</td><td>~0.2 มม. (จริง 0.3–1 มม.)</td></tr>
+            <tr><td>Encoder อุตสาหกรรม 17–19 bit</td><td>~0.001–0.003°</td><td>&lt;0.05 มม. (กลไกเป็นตัวจำกัด)</td></tr>
+        </table>
+        <p class="lede" style="font-size:15px">อ้างอิง (ประมาณ): แขนวัดพกพาเชิงพาณิชย์ 0.02–0.05 มม. · CMM แบบสะพาน 0.001–0.003 มม.</p>
+
+        <h2>พอ encoder ดีแล้ว อะไรจะเป็นตัวจำกัด</h2>
+        <div class="grid">
+            <div class="card">
+                <h3>ระยะหลวมในข้อต่อ</h3>
+                <p>ใช้ตลับลูกปืนแบบ pre-load ไม่มีระยะคลอน</p>
+            </div>
+            <div class="card">
+                <h3>แขนงอตัว</h3>
+                <p>ท่อคาร์บอนหรืออะลูมิเนียม ทำให้เบา</p>
+            </div>
+            <div class="card">
+                <h3>ขนาดไม่ตรงแบบ</h3>
+                <p>calibrate ด้วยลูกบอล/บล็อกอ้างอิงหลายจุด แล้วคำนวณพารามิเตอร์ใหม่</p>
+            </div>
+            <div class="card">
+                <h3>อุณหภูมิ</h3>
+                <p>อะลูมิเนียมขยาย ~0.023 มม. ต่อเมตรต่อ °C</p>
+            </div>
+            <div class="card">
+                <h3>หัววัด</h3>
+                <p>หัวสวิตช์ธรรมดาวัดซ้ำ ~0.05–0.1 มม. · แบบ Renishaw ดีกว่ามากแต่แพง</p>
+            </div>
+        </div>
+
+        <h2>แบบแขนวัด passive ที่แนะนำ</h2>
+        <ol class="steps">
+            <li><b>Encoder ทุกข้อต่อ</b><p>AS5047P 14-bit อ่านผ่าน SPI ด้วย Raspberry Pi 5</p></li>
+            <li><b>สปริงถ่วงน้ำหนัก</b><p>ให้แขนเบา ขยับด้วยมือได้นิ่ม</p></li>
+            <li><b>หัววัด + ปุ่มวัด</b><p>หัวสัมผัสหรือปุ่มกดเก็บจุด</p></li>
+            <li><b>Calibrate</b><p>วัดลูกบอลและบล็อกอ้างอิงหลายท่า แล้วปรับค่าความยาว/แกน</p></li>
+        </ol>
+        <div class="note"><b>ผลที่คาด:</b> ประมาณ 0.3–1 มม. ในพื้นที่ทำงาน ~600 มม. — พอตรวจชิ้นงานหรือเก็บรูปทรง แต่แทน CMM จริงไม่ได้ · อย่าใช้แขนที่มีมอเตอร์มาวัด</div>
+
+        <footer>robot_101 · <code>sim/docs/cmm.html</code></footer>
+    </main>
+    <script src="cmm-calc.js"></script>
+</body>
+</html>
