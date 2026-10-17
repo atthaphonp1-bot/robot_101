@@ -330,6 +330,121 @@
 </ol>
 
 <div class="note"><b>ก่อนเสียบไฟครั้งแรก:</b> ตรวจขั้วไฟ PSU ด้วยมัลติมิเตอร์ · ตั้ง PSU ไม่เกิน 6V · ยังไม่ใส่ horn/แขนกับ servo จนกว่าจะถึงขั้นตั้ง Home</div>
+<h3 id="power-single">ทางเลือก: ไฟจากแหล่งเดียวทั้งระบบ</h3>
+<p>ใช้ PSU 12V ตัวเดียว แล้วแยกเป็น 2 สายผ่าน buck converter — <b>ห้ามต่อ servo กับ Pi เข้า 5V เดียวกันตรง ๆ</b> เพราะตอน servo กระชาก (ได้ถึง ~2.5A ต่อตัว) ไฟจะตกแล้ว Pi รีบูต</p>
+<figure class="diagram" style="margin:16px 0">
+    <svg viewBox="0 0 830 370" role="img" aria-label="ผังไฟจากแหล่งเดียว: PSU 12V แยกเป็น buck 6V ผ่าน E-STOP ไป servo และ buck 5.1V ไป Raspberry Pi 5">
+  <path class="w red" d="M120 180H160"/>
+  <path class="w red" d="M310 165H350V80H380"/>
+  <path class="w red" d="M450 80H480"/>
+  <path class="w red" d="M570 80H600"/>
+  <path class="w purple" d="M710 80H740"/>
+  <path class="w red" d="M310 195H350V280H380"/>
+  <path class="w red" d="M450 280H600"/>
+  <path class="w blue" d="M710 280H740"/>
+  <path class="w gray dash" d="M160 340H820"/>
+
+  <rect class="blk" x="20" y="150" width="100" height="60" rx="10"/>
+  <rect class="blk-hi" x="160" y="140" width="150" height="80" rx="10"/>
+  <rect class="blk" x="380" y="62" width="70" height="36" rx="10"/>
+  <rect class="blk" x="480" y="62" width="90" height="36" rx="10"/>
+  <rect class="blk" x="600" y="56" width="110" height="48" rx="10"/>
+  <rect class="blk-hi" x="740" y="50" width="82" height="60" rx="10"/>
+  <rect class="blk" x="380" y="262" width="70" height="36" rx="10"/>
+  <rect class="blk" x="600" y="256" width="110" height="48" rx="10"/>
+  <rect class="blk-hi" x="740" y="250" width="82" height="60" rx="10"/>
+
+  <text class="t" x="30" y="176">ไฟบ้าน</text>
+  <text class="s" x="30" y="194">220V AC</text>
+  <text class="t" x="172" y="170">PSU 12V 12.5A</text>
+  <text class="s" x="172" y="190">เช่น LRS-150-12</text>
+  <text class="s" x="172" y="206">ตัวเดียวทั้งระบบ</text>
+  <text class="s" x="388" y="85">ฟิวส์ 15A</text>
+  <text class="t" x="488" y="85">E-STOP</text>
+  <text class="t" x="610" y="78">Buck 6V</text>
+  <text class="s" x="610" y="96">≥ 20A</text>
+  <text class="t" x="750" y="76">PCA9685</text>
+  <text class="s" x="750" y="96">servo ×6</text>
+  <text class="s" x="388" y="285">ฟิวส์ 5A</text>
+  <text class="t" x="610" y="278">Buck 5.1V</text>
+  <text class="s" x="610" y="296">5A</text>
+  <text class="t" x="750" y="276">Pi 5</text>
+  <text class="s" x="750" y="296">→ ESP32 (USB)</text>
+  <text class="s" x="480" y="50">ตัดเฉพาะไฟ servo</text>
+  <text class="s" x="600" y="128">servo กระชากไม่กระทบ Pi</text>
+  <text class="s" x="170" y="362">GND ทุกตัวต่อร่วมกัน</text>
+  <text class="s" x="210" y="60">12V</text>
+  <text class="s" x="612" y="240">5.1V</text>
+  <text class="s" x="740" y="40">6V</text>
+</svg>
+    <p style="margin:10px 4px 0;color:var(--muted);font-size:13px">PSU ตัวเดียว → 2 สาย: servo (6V ผ่าน E-STOP) และ Pi 5 (5.1V) · GND ร่วม</p>
+  </figure>
+
+<table>
+  <tr>
+    <th>ส่วน</th>
+    <th>แรงดัน</th>
+    <th>ใช้ไฟโดยประมาณ</th>
+  </tr>
+  <tr>
+    <td>servo ×6</td>
+    <td>6V</td>
+    <td>ใช้จริงสูงสุด ~10A (~60W)</td>
+  </tr>
+  <tr>
+    <td>Pi 5 + กล้อง + ESP32</td>
+    <td>5.1V</td>
+    <td>~3–5A (15–25W)</td>
+  </tr>
+  <tr>
+    <td>รวมที่ PSU</td>
+    <td>12V</td>
+    <td>~7A (~85W) → PSU 12.5A เผื่อพอ</td>
+  </tr>
+</table>
+
+<table>
+  <tr>
+    <th>อุปกรณ์</th>
+    <th>สเปก</th>
+    <th>หมายเหตุ</th>
+  </tr>
+  <tr>
+    <td>PSU</td>
+    <td>12V ≥ 12.5A (เช่น Mean Well LRS-150-12)</td>
+    <td>แบบปิดมิดชิด ต่อสายดิน</td>
+  </tr>
+  <tr>
+    <td>Buck servo</td>
+    <td>ปรับได้ ตั้ง 6V · ≥ 20A</td>
+    <td><span class="tag bad">ห้าม</span> ใช้ตัวเล็กแบบ XL4016 (8A) ไม่พอ</td>
+  </tr>
+  <tr>
+    <td>Buck Pi</td>
+    <td>5.1V ≥ 5A หรือแบบ USB-C PD 27W</td>
+    <td>แบบ PD ง่ายที่สุด</td>
+  </tr>
+  <tr>
+    <td>ฟิวส์</td>
+    <td>15A (สาย servo) · 5A (สาย Pi)</td>
+    <td>ใส่แยกแต่ละสาย</td>
+  </tr>
+  <tr>
+    <td>สายไฟ</td>
+    <td>สาย servo/12V ≥ 16 AWG</td>
+    <td>สายเล็กจะร้อนและทำให้ไฟตก</td>
+  </tr>
+</table>
+
+<ol class="steps">
+  <li><b>ตั้งแรงดัน buck ก่อนต่ออุปกรณ์</b><p>วัดด้วยมัลติมิเตอร์ให้ได้ 6.0V และ 5.1V ตอนยังไม่มีโหลด</p></li>
+  <li><b>E-STOP อยู่ที่สาย servo เท่านั้น</b><p>กดแล้ว servo หยุด แต่ Pi กับ ESP32 ยังทำงานต่อ</p></li>
+  <li><b>Pi 5 กับ buck ที่ไม่มี PD</b><p>Pi จะเตือนไฟไม่พอและจำกัดกระแส USB — ถ้า buck จ่าย 5A ได้จริง ให้เพิ่มบรรทัดนี้ใน <code>/boot/firmware/config.txt</code></p><pre><code>usb_max_current_enable=1</code></pre></li>
+  <li><b>ต่อ GND ร่วม</b><p>GND ของ PSU, buck ทั้งสอง, PCA9685, Pi และ ESP32 ต้องต่อถึงกัน</p></li>
+</ol>
+
+<div class="note"><b>ไฟบ้าน 220V อันตราย:</b> ใช้ PSU แบบปิดมิดชิด ต่อสายดิน ห้ามจับขั้วตอนมีไฟ — ถ้าไม่มั่นใจให้ช่างไฟช่วยต่อฝั่งไฟบ้าน</div>
+
 <h2 id="firmware">3 · ลง firmware ใน ESP32</h2>
 <ol class="steps">
   <li><b>ติดตั้งเครื่องมือบน Mac</b><p>VS Code + ส่วนขยาย PlatformIO IDE · ถ้าบอร์ดใช้ชิป USB รุ่น CH340 อาจต้องลงไดรเวอร์</p></li>
