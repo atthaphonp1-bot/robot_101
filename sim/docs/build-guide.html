@@ -1,0 +1,369 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Build Guide</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="docs.css">
+</head>
+<body>
+<main>
+  <div class="crumb"><a href="index.html">เอกสาร</a> › คู่มือประกอบทีละขั้น</div>
+  <p class="eyebrow">เริ่มที่นี่ · ESP32 + PCA9685 + Raspberry Pi 5</p>
+  <h1>ประกอบแขนกลให้ทำงานได้ ทีละขั้น</h1>
+  <p class="lede">ทำตามลำดับ 1 → 7 · แต่ละขั้นมีวิธีเช็กว่าผ่านก่อนไปขั้นถัดไป</p>
+  <div class="grid">
+    <a class="card" href="#parts"><h3>1 · อุปกรณ์</h3></a>
+    <a class="card" href="#wiring"><h3>2 · ต่อสาย ESP32</h3></a>
+    <a class="card" href="#firmware"><h3>3 · ลง firmware</h3></a>
+    <a class="card" href="#home"><h3>4 · ตั้ง Home + ประกอบ</h3></a>
+    <a class="card" href="#pi"><h3>5 · ตั้งค่า Pi 5</h3></a>
+    <a class="card" href="#test"><h3>6 · ทดสอบทีละชั้น</h3></a>
+    <a class="card" href="#trouble"><h3>7 · แก้ปัญหา</h3></a>
+  </div>
+
+<h2 id="parts">1 · รายการอุปกรณ์</h2>
+<table>
+  <thead>
+    <tr>
+      <th>อุปกรณ์</th>
+      <th>รุ่นที่แนะนำ</th>
+      <th>จำนวน</th>
+      <th>หมายเหตุ</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>บอร์ดควบคุม</td>
+      <td>ESP32 DevKit V1 (ESP32-WROOM-32) 38 ขา</td>
+      <td>1</td>
+      <td>ห้ามใช้ C3/S2/S3 หรือ WROVER (GPIO16/17 ไม่ว่าง)</td>
+    </tr>
+    <tr>
+      <td>บอร์ดขยายขา</td>
+      <td>ESP32 terminal expansion board 38 pin</td>
+      <td>1</td>
+      <td>ไม่บังคับ แต่ช่วยให้สายไม่หลุด</td>
+    </tr>
+    <tr>
+      <td>ไดรเวอร์ servo</td>
+      <td>PCA9685 16 ช่อง (I2C)</td>
+      <td>1</td>
+      <td>แอดเดรส 0x40</td>
+    </tr>
+    <tr>
+      <td>Servo</td>
+      <td>MG996R (หรือชุดแขน 6DOF)</td>
+      <td>6</td>
+      <td>J1–J6</td>
+    </tr>
+    <tr>
+      <td>ไฟ servo</td>
+      <td>Power supply 5–6V ≥ 10A</td>
+      <td>1</td>
+      <td>แยกจากไฟบอร์ด</td>
+    </tr>
+    <tr>
+      <td>ตัวเก็บประจุ</td>
+      <td>1000µF 16V</td>
+      <td>1</td>
+      <td>คร่อม V+/GND ที่ PCA9685</td>
+    </tr>
+    <tr>
+      <td>ปุ่มฉุกเฉิน</td>
+      <td>E-STOP แบบมีหน้าสัมผัส NC + NO</td>
+      <td>1</td>
+      <td>NC ตัดไฟ servo · NO แจ้ง ESP32</td>
+    </tr>
+    <tr>
+      <td>จอ</td>
+      <td>OLED 0.96" SSD1306 I2C</td>
+      <td>1</td>
+      <td>แอดเดรส 0x3C</td>
+    </tr>
+    <tr>
+      <td>สมอง</td>
+      <td>Raspberry Pi 5 (4GB หรือ 8GB) + Active Cooler</td>
+      <td>1</td>
+      <td>ไฟ USB-C 5V 5A (27W)</td>
+    </tr>
+    <tr>
+      <td>การ์ด</td>
+      <td>microSD 32GB ขึ้นไป</td>
+      <td>1</td>
+      <td>Raspberry Pi OS Lite 64-bit</td>
+    </tr>
+    <tr>
+      <td>กล้อง</td>
+      <td>กล้อง USB 720p–1080p</td>
+      <td>1</td>
+      <td>ติดด้านบน สูง 50–60 ซม.</td>
+    </tr>
+    <tr>
+      <td>สาย</td>
+      <td>USB data cable (ESP32 ↔ Pi), สาย Dupont, terminal block</td>
+      <td>—</td>
+      <td>สาย USB ต้องส่งข้อมูลได้ ไม่ใช่สายชาร์จอย่างเดียว</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="wiring">2 · ต่อสาย ESP32</h2>
+<p>ดูผังเส้นสายที่ปุ่ม <b>วงจร</b> ใน <a href="../index.html">Simulator</a> ประกอบ</p>
+<table>
+  <thead>
+    <tr>
+      <th>ขา ESP32</th>
+      <th>ต่อไปที่</th>
+      <th>หมายเหตุ</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>3V3</td>
+      <td>PCA9685 VCC, OLED VCC</td>
+      <td>ไฟลอจิกเท่านั้น ห้ามจ่าย servo</td>
+    </tr>
+    <tr>
+      <td>GND</td>
+      <td>PCA9685 GND, OLED GND, PSU −, E-STOP (NO)</td>
+      <td>GND ต้องต่อร่วมกันทั้งหมด</td>
+    </tr>
+    <tr>
+      <td>GPIO21 (SDA)</td>
+      <td>PCA9685 SDA, OLED SDA</td>
+      <td>บัส I2C เดียวกัน</td>
+    </tr>
+    <tr>
+      <td>GPIO22 (SCL)</td>
+      <td>PCA9685 SCL, OLED SCL</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>GPIO4</td>
+      <td>E-STOP หน้าสัมผัส NO → GND</td>
+      <td>กด = สลับหยุด/ทำต่อ</td>
+    </tr>
+    <tr>
+      <td>GPIO16 (RX2) / GPIO17 (TX2)</td>
+      <td>Pi Pin 8 (TXD) / Pin 10 (RXD)</td>
+      <td>เฉพาะทาง UART — ถ้าใช้สาย USB ไม่ต้องต่อ</td>
+    </tr>
+    <tr>
+      <td>USB</td>
+      <td>Raspberry Pi 5 (ช่อง USB-A)</td>
+      <td>ได้ทั้งไฟเลี้ยง ESP32 และ Serial — ทางที่แนะนำ</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>PCA9685 → Servo</h3>
+<table>
+  <thead>
+    <tr>
+      <th>ช่อง</th>
+      <th>ข้อต่อ</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>CH0</td>
+      <td>J1 ฐานหมุน</td>
+    </tr>
+    <tr>
+      <td>CH1</td>
+      <td>J2 ไหล่</td>
+    </tr>
+    <tr>
+      <td>CH2</td>
+      <td>J3 ศอก</td>
+    </tr>
+    <tr>
+      <td>CH3</td>
+      <td>J4 ข้อมือก้ม-เงย</td>
+    </tr>
+    <tr>
+      <td>CH4</td>
+      <td>J5 ข้อมือหมุน</td>
+    </tr>
+    <tr>
+      <td>CH5</td>
+      <td>J6 กริปเปอร์</td>
+    </tr>
+  </tbody>
+</table>
+<p>หัว servo: สายส้ม/เหลือง = สัญญาณ (ด้าน PWM) · แดง = V+ · น้ำตาล/ดำ = GND — เสียบให้ตรงแถวบนบอร์ด</p>
+
+<h3>ไฟเลี้ยง</h3>
+<ol class="steps">
+  <li>
+    <b>PSU + → E-STOP (NC) → PCA9685 V+</b>
+    <p>กด E-STOP แล้วไฟ servo ตัดทันที</p>
+  </li>
+  <li>
+    <b>PSU − → PCA9685 GND → ESP32 GND</b>
+    <p>GND ร่วม ไม่งั้น servo สั่นมั่ว</p>
+  </li>
+  <li>
+    <b>C 1000µF คร่อม V+/GND</b>
+    <p>ขายาว (+) ไป V+ · กันไฟตกตอน servo กระชาก</p>
+  </li>
+  <li>
+    <b>ESP32 ใช้ไฟจาก USB</b>
+    <p>ห้ามต่อไฟ 5–6V ของ servo เข้าขา 3V3 หรือ GPIO</p>
+  </li>
+</ol>
+
+<div class="note"><b>ก่อนเสียบไฟครั้งแรก:</b> ตรวจขั้วไฟ PSU ด้วยมัลติมิเตอร์ · ตั้ง PSU ไม่เกิน 6V · ยังไม่ใส่ horn/แขนกับ servo จนกว่าจะถึงขั้นตั้ง Home</div>
+<h2 id="firmware">3 · ลง firmware ใน ESP32</h2>
+<ol class="steps">
+  <li><b>ติดตั้งเครื่องมือบน Mac</b><p>VS Code + ส่วนขยาย PlatformIO IDE · ถ้าบอร์ดใช้ชิป USB รุ่น CH340 อาจต้องลงไดรเวอร์</p></li>
+  <li><b>โหลดโค้ด</b><p></p><pre><code>git clone https://github.com/atthaphonp1-bot/robot_101.git</code></pre></li>
+  <li><b>สร้าง secrets.h</b><p>คัดลอก firmware/src/secrets.example.h เป็น secrets.h แล้วใส่ WIFI_SSID/WIFI_PASS ของ router บ้าน (2.4 GHz), AP_PASS, MQTT_PREFIX และ MQTT_USER/MQTT_PASS ที่ตั้งตอนรัน setup.sh บน Pi — ไฟล์นี้ไม่ขึ้น GitHub</p><pre><code>cp firmware/src/secrets.example.h firmware/src/secrets.h</code></pre></li>
+  <li><b>เปิดโหมดบอร์ดจริง</b><p>ใน firmware/src/main.cpp แก้ <code>#define USE_PCA9685 0</code> เป็น <code>1</code> (0 ใช้กับ Wokwi เท่านั้น)</p></li>
+  <li><b>ชี้ MQTT ไปที่ Pi</b><p>ใน main.cpp ตั้ง <code>MQTT_HOST</code> เป็น IP ของ Pi (เช่น "192.168.1.50") — ESP32 ใช้ชื่อ .local ไม่ได้ · ดู IP ได้จากผลสรุปตอนท้าย setup.sh</p></li>
+  <li><b>อัปโหลด</b><p>เสียบ ESP32 เข้า Mac แล้วรันในโฟลเดอร์ firmware (หรือกดปุ่ม Upload ของ PlatformIO)</p><pre><code>cd robot_101/firmware &amp;&amp; pio run -t upload</code></pre></li>
+  <li><b>ดู Serial Monitor</b><p>ควรเห็น WiFi → IP → Ready. และ MQTT connected — ลองพิมพ์ {"home":1} ต้องได้ {"ok":1}</p><pre><code>pio device monitor -b 115200</code></pre></li>
+</ol>
+
+<h2 id="home">4 · ตั้ง Home และประกอบแขน</h2>
+<p>สำคัญที่สุดของการประกอบ — ใส่ horn ตอน servo อยู่ท่า Home แล้ว มุมใน Simulator จะตรงกับแขนจริง</p>
+<table>
+  <tr><th>ข้อ</th><th>มุม servo ท่า Home</th><th>ท่าทางที่ต้องจัดให้ตรง</th></tr>
+  <tr><td>J1 ฐานหมุน</td><td>90°</td><td>แขนหันไปด้านหน้า (แกน X)</td></tr>
+  <tr><td>J2 ไหล่</td><td>90°</td><td>แขนท่อนบนตั้งตรง</td></tr>
+  <tr><td>J3 ศอก</td><td>135°</td><td>แขนท่อนล่างขนานพื้นชี้ไปข้างหน้า</td></tr>
+  <tr><td>J4 ข้อมือก้ม-เงย</td><td>135°</td><td>ข้อมือก้มลง 45°</td></tr>
+  <tr><td>J5 ข้อมือหมุน</td><td>90°</td><td>นิ้วกริปเปอร์อยู่แนวเดียวกับแขน</td></tr>
+  <tr><td>J6 กริปเปอร์</td><td>80°</td><td>กริปเปอร์เปิดครึ่งทาง</td></tr>
+</table>
+<ol class="steps">
+  <li><b>ต่อไฟและเปิดบอร์ด (ยังไม่ใส่ horn)</b><p>firmware จะสั่ง servo ทุกตัวไปท่า Home ตอนบูต</p></li>
+  <li><b>ใส่ horn และแขนทีละข้อ</b><p>จัดท่าให้ตรงตามตาราง แล้วขันสกรูกลาง horn</p></li>
+  <li><b>ทดสอบทีละข้อ ความเร็วต่ำ</b><p>ส่ง {"speed":30} ก่อน แล้วขยับทีละข้อ มืออยู่ใกล้ E-STOP</p></li>
+  <li><b>ปรับ offset ถ้ามุมเพี้ยน</b><p>แก้ค่า offset/dir ในตาราง JOINTS ของ main.cpp และใน Simulator ให้เท่ากัน</p></li>
+</ol>
+<div class="note"><b>ระวัง:</b> อย่าหมุน servo ด้วยมือตอนมีไฟ · ถ้า servo ร้อนหรือส่งเสียงคราง แปลว่าดันกลไกอยู่ กด E-STOP แล้วจัด horn ใหม่</div>
+<h2 id="pi">5 · ตั้งค่า Raspberry Pi 5</h2>
+<ol class="steps">
+  <li>
+    <b>เขียน OS</b>
+    <p>Raspberry Pi Imager → Raspberry Pi 5 → Raspberry Pi OS Lite (64-bit) · Edit Settings: hostname robotpi, user/รหัส, WiFi บ้าน, Country TH, Enable SSH — รายละเอียดใน <a href="raspberry-pi.html">หน้า Pi</a></p>
+  </li>
+  <li>
+    <b>SSH เข้า Pi และโหลดโค้ด</b>
+    <pre><code>ssh &lt;user&gt;@robotpi.local</code></pre>
+    <pre><code>sudo apt-get install -y git &amp;&amp; git clone https://github.com/atthaphonp1-bot/robot_101.git ~/robot_101</code></pre>
+  </li>
+  <li>
+    <b>ติดตั้ง Mosquitto + OpenCV + เว็บ</b>
+    <p>จะถามชื่อ/รหัส MQTT (ใช้ค่าเดียวกันใน secrets.h) · จด IP ที่สรุปตอนท้ายไว้</p>
+    <pre><code>bash ~/robot_101/pi/setup.sh</code></pre>
+  </li>
+  <li>
+    <b>(ทางเลือก) ติดตั้ง VLM planner</b>
+    <p>สั่งแขนด้วยข้อความ · กด Enter ข้าม API key ได้</p>
+    <pre><code>bash ~/robot_101/pi/setup-planner.sh</code></pre>
+  </li>
+  <li>
+    <b>ต่อ ESP32 เข้า Pi ด้วยสาย USB</b>
+    <p>เช็กว่า Pi เห็นบอร์ด (ขึ้น /dev/ttyUSB0 หรือ /dev/ttyACM0) – หลังจากเพิ่มผู้ใช้ไปยังกลุ่ม dialout ให้ logout/login ใหม่</p>
+    <pre><code>ls /dev/ttyUSB* /dev/ttyACM*</code></pre>
+    <pre><code>sudo usermod -aG dialout $USER</code></pre>
+  </li>
+</ol>
+
+<h2 id="test">6 · ทดสอบทีละชั้น</h2>
+<p>ทำตามลำดับ ผ่านข้อหนึ่งค่อยไปข้อถัดไป</p>
+<ol class="steps">
+  <li>
+    <b>Serial ผ่าน USB</b>
+    <p>ต้องขึ้น PASS ครบ 5/5</p>
+    <pre><code>python3 ~/robot_101/pi/serial_test.py /dev/ttyUSB0</code></pre>
+  </li>
+  <li>
+    <b>สั่งแขนจาก Pi</b>
+    <p>แขนต้องกลับท่า Home แล้วไปลอยเหนือจุด (180, 0, 100)</p>
+    <pre><code>cd ~/robot_101/pi &amp;&amp; python3 arm.py --port /dev/ttyUSB0 home</code></pre>
+    <pre><code>python3 arm.py --port /dev/ttyUSB0 ik 180 0 100</code></pre>
+  </li>
+  <li>
+    <b>MQTT</b>
+    <p>เปิดดูข้อความ — ต้องเห็น status online และ state ของแขน</p>
+    <pre><code>mosquitto_sub -h localhost -u &lt;mqtt-user&gt; -P '&lt;mqtt-pass&gt;' -t '#' -v</code></pre>
+  </li>
+  <li>
+    <b>Simulator บนคอม/มือถือ</b>
+    <p>เปิด <a href="http://robotpi.local:8080/">http://robotpi.local:8080/</a> → แท็บ เชื่อมต่อ → MQTT broker ws://robotpi.local:9001 + user/รหัส + prefix เดียวกับ firmware → ขยับ slider แขนจริงต้องขยับตาม</p>
+  </li>
+  <li>
+    <b>แดชบอร์ดมือถือ</b>
+    <p>เปิด <a href="http://robotpi.local:8080/remote.html">http://robotpi.local:8080/remote.html</a> → ⚙ ใส่ค่าเดียวกัน → ป้ายต้องขึ้น แขน online</p>
+  </li>
+  <li>
+    <b>กล้อง + หยิบของ</b>
+    <p>calibrate ตาม <a href="camera.html">หน้ากล้อง</a> แล้วลองหยิบกล่องสี (ต้องลง <code>websocket-client</code> ก่อนถ้าสั่งผ่าน WebSocket)</p>
+  </li>
+</ol>
+
+<h2 id="trouble">7 · แก้ปัญหา</h2>
+<table>
+  <thead>
+    <tr>
+      <th>อาการ</th>
+      <th>สาเหตุที่พบบ่อย</th>
+      <th>วิธีแก้</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>servo สั่น/กระตุก</td>
+      <td>GND ไม่ร่วม หรือไฟไม่พอ</td>
+      <td>ต่อ GND ร่วม · ใช้ PSU ≥ 10A · ใส่ C 1000µF</td>
+    </tr>
+    <tr>
+      <td>ESP32 รีสตาร์ทเอง</td>
+      <td>ดึงไฟ servo จากบอร์ด</td>
+      <td>แยกไฟ servo ไป PSU</td>
+    </tr>
+    <tr>
+      <td>servo ไม่ขยับเลย</td>
+      <td>USE_PCA9685 ยังเป็น 0 หรือ E-STOP ค้าง</td>
+      <td>ตั้งเป็น 1 แล้วอัปโหลดใหม่ · ดูจอ OLED ว่าขึ้น E-STOP ไหม</td>
+    </tr>
+    <tr>
+      <td>OLED ไม่ติด</td>
+      <td>สลับ SDA/SCL</td>
+      <td>SDA=GPIO21, SCL=GPIO22</td>
+    </tr>
+    <tr>
+      <td>MQTT ไม่ connected</td>
+      <td>MQTT_HOST เป็นชื่อ .local หรือรหัสผิด</td>
+      <td>ใช้ IP ของ Pi · เช็ก MQTT_USER/MQTT_PASS</td>
+    </tr>
+    <tr>
+      <td>Pi หา /dev/ttyUSB0 ไม่เจอ</td>
+      <td>สาย USB ชาร์จอย่างเดียว</td>
+      <td>เปลี่ยนสายที่ส่งข้อมูลได้</td>
+    </tr>
+    <tr>
+      <td>Permission denied ที่ /dev/ttyUSB0</td>
+      <td>user ไม่อยู่กลุ่ม dialout</td>
+      <td>sudo usermod -aG dialout $USER แล้ว login ใหม่</td>
+    </tr>
+    <tr>
+      <td>IK ตอบ unreachable</td>
+      <td>จุดไกล/ต่ำเกิน</td>
+      <td>ลองจุดในระยะเอื้อม ~100–230 มม. จากฐาน</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="note"><b>ความปลอดภัย:</b> ทดสอบครั้งแรกด้วยความเร็วต่ำ มืออยู่ที่ E-STOP เสมอ · อย่าใช้ broker สาธารณะกับแขนจริง</div>
+
+  <footer>robot_101 · <code>sim/docs/build-guide.html</code></footer>
+</main>
+</body>
+</html>
