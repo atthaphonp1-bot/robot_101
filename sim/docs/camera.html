@@ -128,6 +128,32 @@
 
         <h2>Calibrate กล้องด้านบน (Pi 5)</h2>
         <p class="lede" style="font-size:16px">Pi OS Lite ไม่มีหน้าจอ จึงถ่ายภาพบน Pi แล้วไปคลิกจุดบน Mac จากนั้นส่งผลกลับไป Pi</p>
+  <figure class="diagram" style="margin:16px 0">
+    <svg viewBox="0 0 760 430" role="img" aria-label="ภาพจากกล้องด้านบน แสดงจุด calibrate 4 จุดรอบฐานแขนพร้อมพิกัด">
+  <path class="w red" d="M380 380V300"/>
+  <path class="w green" d="M380 380H300"/>
+  <path class="w gray dash" d="M245 290H515V155H245Z"/>
+  <path class="w purple" d="M233 290H257M245 278V302"/>
+  <path class="w purple" d="M233 155H257M245 143V167"/>
+  <path class="w purple" d="M503 155H527M515 143V167"/>
+  <path class="w purple" d="M503 290H527M515 278V302"/>
+  <rect class="blk" x="140" y="44" width="480" height="336" rx="14"/>
+  <circle class="blk-hi" cx="380" cy="380" r="28"/>
+  <text class="t" x="150" y="34">ภาพจากกล้องด้านบน (~500×500 มม.)</text>
+  <text class="s" x="388" y="312">X หน้า</text>
+  <text class="s" x="300" y="372">Y ซ้าย</text>
+  <text class="s" x="352" y="418">ฐานแขน (0, 0)</text>
+  <text class="t" x="150" y="318">① (100, 150)</text>
+  <text class="t" x="150" y="138">② (250, 150)</text>
+  <text class="t" x="530" y="138">③ (250, −150)</text>
+  <text class="t" x="530" y="318">④ (100, −150)</text>
+  <text class="s" x="640" y="200">เทปกากบาท</text>
+  <text class="s" x="640" y="218">พิกัด mm</text>
+  <text class="s" x="150" y="428">คลิกตามลำดับ ①→④ แล้วพิมพ์ x,y ของแต่ละจุด</text>
+</svg>
+    <p style="margin:10px 4px 0;color:var(--muted);font-size:13px">มุมมองจากกล้อง: ติดเทป 4 จุดที่รู้พิกัด แล้วคลิกตามลำดับ ①→④</p>
+  </figure>
+
         <ol class="steps">
             <li>
                 <b>ติดกล้อง</b>

@@ -97,6 +97,37 @@
   </table>
 
   <h2>สิ่งที่ต้องเตรียม</h2>
+  <figure class="diagram" style="margin:16px 0">
+    <svg viewBox="0 0 760 340" role="img" aria-label="พอร์ต Raspberry Pi 5 และสิ่งที่เสียบ: ไฟ USB-C, ESP32, กล้อง USB, microSD, GPIO">
+  <path class="w red" d="M230 182H140"/>
+  <path class="w gray" d="M530 133H600"/>
+  <path class="w gray" d="M530 193H600"/>
+  <path class="w purple" d="M320 266V296"/>
+  <rect class="blk-hi" x="260" y="80" width="240" height="170" rx="14"/>
+  <rect class="blk" x="300" y="86" width="180" height="14" rx="3"/>
+  <rect class="blk" x="230" y="170" width="30" height="24" rx="4"/>
+  <rect class="blk" x="500" y="120" width="30" height="26" rx="4"/>
+  <rect class="blk" x="500" y="180" width="30" height="26" rx="4"/>
+  <rect class="blk" x="300" y="250" width="40" height="16" rx="3"/>
+  <rect class="blk" x="20" y="160" width="120" height="46" rx="10"/>
+  <rect class="blk" x="600" y="110" width="140" height="46" rx="10"/>
+  <rect class="blk" x="600" y="170" width="140" height="46" rx="10"/>
+  <text class="t" x="280" y="130">Raspberry Pi 5</text>
+  <text class="s" x="280" y="150">ใส่ Active Cooler ด้านบน</text>
+  <text class="s" x="280" y="236">WiFi → robotpi.local</text>
+  <text class="s" x="300" y="74">GPIO 40 ขา (UART/I2C ทางเลือก)</text>
+  <text class="t" x="30" y="182">Adapter 27W</text>
+  <text class="s" x="30" y="198">USB-C 5V 5A</text>
+  <text class="t" x="610" y="132">ESP32</text>
+  <text class="s" x="610" y="148">สาย USB (ส่งข้อมูลได้)</text>
+  <text class="t" x="610" y="192">กล้อง USB</text>
+  <text class="s" x="610" y="208">ติดด้านบนโต๊ะ</text>
+  <text class="t" x="280" y="316">microSD 32GB</text>
+  <text class="s" x="280" y="334">Pi OS Lite 64-bit</text>
+</svg>
+    <p style="margin:10px 4px 0;color:var(--muted);font-size:13px">พอร์ตของ Pi 5 และสิ่งที่ต้องเสียบ</p>
+  </figure>
+
   <div class="grid">
     <div class="card"><h3>microSD 16–32GB</h3><p>เขียน Raspberry Pi OS Lite (64-bit) ด้วย Raspberry Pi Imager — ตั้ง WiFi, SSH, user/รหัสผ่านไว้ตอนเขียนได้เลย ไม่ต้องต่อจอ</p></div>
     <div class="card"><h3>Adapter USB-C 5V 5A</h3><p>ตัว official 27W ไฟไม่พอ Pi จะรีบูตเองตอนเปิดกล้อง · แยกจากไฟ servo แต่ GND ต่อร่วมเหมือนเดิม</p></div>

@@ -77,6 +77,31 @@
         <p class="lede" style="font-size:14px">สูตร: ความคลาดเคลื่อนที่ปลาย ≈ √Σ(Lᵢ · Δθ)² · รวมกับกลไกและอุณหภูมิแบบ RSS · เป็นการประมาณทางวิศวกรรม ต้องยืนยันด้วยการทดสอบจริง</p>
 
         <h2>เทียบตัวอ่านมุม</h2>
+  <figure class="diagram" style="margin:16px 0">
+    <svg viewBox="0 0 760 300" role="img" aria-label="มุมผิดนิดเดียวที่ข้อต่อทำให้ปลายแขนคลาดเท่ากับ L คูณ Δθ">
+  <path class="w blue" d="M120 220H600"/>
+  <path class="w red dash" d="M120 220L596 170"/>
+  <path class="w purple" d="M630 220V170"/>
+  <path class="w purple" d="M622 220H638M622 170H638"/>
+  <path class="w gray" d="M220 220A100 100 0 0 0 219 210"/>
+  <circle class="blk-hi" cx="120" cy="220" r="12"/>
+  <circle class="blk-hi" cx="600" cy="220" r="6"/>
+  <circle class="blk" cx="596" cy="170" r="6"/>
+  <text class="t" x="20" y="32">มุมผิดนิดเดียว ปลายแขนคลาดมาก</text>
+  <text class="s" x="20" y="52">L = 500 มม., Δθ = 1° (servo) → คลาด ~8.7 มม.</text>
+  <text class="s" x="20" y="70">L = 500 มม., Δθ = 0.022° (encoder 14-bit) → คลาด ~0.19 มม.</text>
+  <text class="t" x="88" y="258">ข้อต่อ</text>
+  <text class="s" x="60" y="276">อ่านมุมผิดไป Δθ</text>
+  <text class="s" x="232" y="212">Δθ</text>
+  <text class="t" x="300" y="246">L = ระยะจากข้อต่อถึงปลาย</text>
+  <text class="t" x="646" y="190">คลาด</text>
+  <text class="m" x="646" y="210">≈ L × Δθ</text>
+  <text class="s" x="560" y="244">ตำแหน่งจริง</text>
+  <text class="s" x="520" y="156">ตำแหน่งที่คำนวณได้</text>
+</svg>
+    <p style="margin:10px 4px 0;color:var(--muted);font-size:13px">ทำไมความละเอียดของมุมสำคัญที่สุด: ความคลาดเคลื่อนที่ปลาย ≈ ระยะถึงปลาย × มุมที่ผิด</p>
+  </figure>
+
         <table>
             <tr><th>การอ่านมุม</th><th>ความละเอียด</th><th>ความคลาดเคลื่อนที่ปลายแขน</th></tr>
             <tr><td>MG996R (แบบตอนนี้)</td><td>~1°</td><td>~9 มม. (แย่สุด ~16 มม.)</td></tr>
@@ -112,6 +137,40 @@
         </div>
 
         <h2>แบบแขนวัด passive ที่แนะนำ</h2>
+  <figure class="diagram" style="margin:16px 0">
+    <svg viewBox="0 0 760 360" role="img" aria-label="แบบแขนวัด passive: encoder ทุกข้อต่อ สปริงถ่วง หัววัด และ Raspberry Pi 5 อ่านค่า">
+  <path class="w gray" d="M20 330H740"/>
+  <path class="w blue" d="M120 290V180"/>
+  <path class="w blue" d="M120 180L320 120"/>
+  <path class="w blue" d="M320 120L520 200"/>
+  <path class="w blue" d="M520 200L600 316"/>
+  <path class="w green dash" d="M120 240L250 150"/>
+  <path class="w purple dash" d="M600 60H320V112"/>
+  <path class="w purple dash" d="M600 76H520V192"/>
+  <rect class="blk" x="60" y="290" width="120" height="40" rx="8"/>
+  <rect class="blk-hi" x="107" y="172" width="26" height="16" rx="4"/>
+  <rect class="blk-hi" x="307" y="112" width="26" height="16" rx="4"/>
+  <rect class="blk-hi" x="507" y="192" width="26" height="16" rx="4"/>
+  <rect class="blk-hi" x="107" y="282" width="26" height="16" rx="4"/>
+  <circle class="blk-hi" cx="600" cy="322" r="6"/>
+  <rect class="blk" x="600" y="24" width="140" height="64" rx="12"/>
+  <text class="t" x="614" y="48">Raspberry Pi 5</text>
+  <text class="s" x="614" y="68">อ่าน SPI · คำนวณ FK</text>
+  <text class="s" x="420" y="52">SPI</text>
+  <text class="s" x="140" y="186">encoder 14-bit</text>
+  <text class="s" x="338" y="112">encoder</text>
+  <text class="s" x="536" y="196">encoder</text>
+  <text class="s" x="60" y="276">encoder ฐานหมุน</text>
+  <text class="t" x="200" y="96">ท่อคาร์บอน/อะลูมิเนียม</text>
+  <text class="s" x="200" y="114">เบาแต่ไม่งอ</text>
+  <text class="s" x="180" y="206">สปริงถ่วงน้ำหนัก</text>
+  <text class="t" x="612" y="300">หัววัด</text>
+  <text class="s" x="612" y="318">+ ปุ่มกดเก็บจุด</text>
+  <text class="s" x="60" y="350">ไม่มีมอเตอร์ — ขยับด้วยมือ</text>
+</svg>
+    <p style="margin:10px 4px 0;color:var(--muted);font-size:13px">แขนวัดแบบไม่มีมอเตอร์: encoder ทุกข้อต่อ · สปริงถ่วง · หัววัด · Pi 5 อ่านค่าผ่าน SPI</p>
+  </figure>
+
         <ol class="steps">
             <li><b>Encoder ทุกข้อต่อ</b><p>AS5047P 14-bit อ่านผ่าน SPI ด้วย Raspberry Pi 5</p></li>
             <li><b>สปริงถ่วงน้ำหนัก</b><p>ให้แขนเบา ขยับด้วยมือได้นิ่ม</p></li>
