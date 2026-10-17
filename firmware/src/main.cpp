@@ -24,6 +24,7 @@ const int SERVO_PINS[6] = {13, 12, 14, 27, 26, 25};
 #include "secrets.h"
 const char* AP_SSID = "RobotArm";        // fallback access point -> 192.168.4.1
 const int ESTOP_PIN = 4;                 // button to GND, toggles E-stop
+const uint32_t DEADMAN_MS = 2000;        // web UIs send {"hb":1} every 500 ms; silence this long = hold position
 // Option B: commands from Raspberry Pi over UART (Pi TXD -> GPIO16, Pi RXD <- GPIO17, GND)
 #define USE_SERIAL2 1
 const int SERIAL2_RX = 16, SERIAL2_TX = 17;
@@ -50,6 +51,8 @@ const float L_BASE = 95, L_UPPER = 120, L_FORE = 115, TCP = 95;   // mm
 float cur[6], tgt[6], spd[6];
 float speedDps = 90;
 bool estop = false;
+uint32_t lastHb = 0;                     // dead-man: armed by the first heartbeat, trips once when they stop
+bool deadmanArmed = false, deadmanTripped = false;
 WebSocketsServer ws(81);
 Adafruit_SSD1306 oled(128, 64, &Wire, -1);
 bool oledOk = false;
@@ -111,12 +114,14 @@ bool autoIK(float x, float y, float z, float pitch, float out[4]) {
 String handleCommand(const char* txt) {
   JsonDocument d;
   if (deserializeJson(d, txt)) return "{\"err\":\"bad json\"}";
+  if (d["hb"].is<int>()) { lastHb = millis(); deadmanArmed = true; deadmanTripped = false; return ""; }
   if (d["status"].is<int>()) {                      // polled by pi/arm_core.py to know when a move is done
     bool moving = false;
     for (int i = 0; i < 6; i++) if (fabsf(tgt[i] - cur[i]) > 0.5f) moving = true;
     char buf[128];
-    snprintf(buf, sizeof buf, "{\"status\":[%.0f,%.0f,%.0f,%.0f,%.0f,%.0f],\"moving\":%s,\"estop\":%s}",
-             cur[0], cur[1], cur[2], cur[3], cur[4], cur[5], moving ? "true" : "false", estop ? "true" : "false");
+    snprintf(buf, sizeof buf, "{\"status\":[%.0f,%.0f,%.0f,%.0f,%.0f,%.0f],\"moving\":%s,\"estop\":%s,\"deadman\":%s}",
+             cur[0], cur[1], cur[2], cur[3], cur[4], cur[5], moving ? "true" : "false", estop ? "true" : "false",
+             deadmanTripped ? "true" : "false");
     return String(buf);
   }
   if (d["stop"].is<int>()) { setTargets(cur); return "{\"ok\":\"stop\"}"; }
@@ -230,6 +235,7 @@ void drawOled() {
   oled.printf("J4 %3.0f J5 %3.0f G  %3.0f\n", cur[3], cur[4], cur[5]);
   oled.printf("spd %.0f  ws %u\n", speedDps, ws.connectedClients());
   if (estop) { oled.setTextSize(2); oled.println("E-STOP"); oled.setTextSize(1); }
+  else if (deadmanTripped) { oled.setTextSize(2); oled.println("NO LINK"); oled.setTextSize(1); }
   oled.display();
 }
 
@@ -301,6 +307,12 @@ void loop() {
   // motion @ 50 Hz
   static uint32_t lastMove = millis();
   uint32_t now = millis();
+  if (deadmanArmed && now - lastHb > DEADMAN_MS) {   // controller went silent: stop and hold position
+    deadmanArmed = false;
+    deadmanTripped = true;
+    setTargets(cur);
+    Serial.println("DEAD-MAN: no heartbeat, holding position");
+  }
   if (now - lastMove >= 20) {
     float dt = (now - lastMove) / 1000.0f;
     lastMove = now;
@@ -319,8 +331,9 @@ void loop() {
     bool moving = false;
     for (int i = 0; i < 6; i++) if (fabsf(tgt[i] - cur[i]) > 0.5f) moving = true;
     char buf[128];
-    snprintf(buf, sizeof buf, "{\"state\":[%.0f,%.0f,%.0f,%.0f,%.0f,%.0f],\"moving\":%s,\"estop\":%s}",
-             cur[0], cur[1], cur[2], cur[3], cur[4], cur[5], moving ? "true" : "false", estop ? "true" : "false");
+    snprintf(buf, sizeof buf, "{\"state\":[%.0f,%.0f,%.0f,%.0f,%.0f,%.0f],\"moving\":%s,\"estop\":%s,\"deadman\":%s}",
+             cur[0], cur[1], cur[2], cur[3], cur[4], cur[5], moving ? "true" : "false", estop ? "true" : "false",
+             deadmanTripped ? "true" : "false");
     ws.broadcastTXT(buf);
 #if USE_MQTT
     static uint32_t lastPub = 0;                        // internet: 10 Hz while moving, 1 Hz idle

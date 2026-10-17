@@ -611,3 +611,11 @@ function drawArm(state) {
 
 // Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', initUI);
+// dead-man heartbeat: the firmware holds position if these stop for 2 s (link lost / app closed)
+if (typeof document !== 'undefined') {
+    setInterval(() => {
+        if (client && client.connected) {
+            client.publish(document.getElementById('topicPrefix').value + '/cmd', '{"hb":1}');
+        }
+    }, 500);
+}

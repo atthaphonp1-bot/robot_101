@@ -352,7 +352,8 @@
 {"grip":110}                   กริปเปอร์ 10=ปิด 120=เปิด
 {"speed":120}                  ความเร็ว °/s
 {"home":1}                     กลับท่า Home
-{"stop":1}                     หยุดทันที</pre>
+{"stop":1}                     หยุดทันที
+{"hb":1}                       heartbeat ทุก 0.5 วิ (เงียบ 2 วิ = แขนหยุด)</pre>
       <p class="note">ถ้าเปิดหน้านี้ผ่าน https เบราว์เซอร์จะบล็อก ws:// — ให้เปิดจากไฟล์ในเครื่องหรือ http://localhost</p>
     </div>
   </aside>
@@ -1112,6 +1113,12 @@ $('#cmd').addEventListener('keydown', e => { if (e.key === 'Enter') submitCmd();
 
 let ws = null, sendTimer = null;
 let mq = null, armOnline = false;
+// dead-man heartbeat: the firmware holds position if these stop for 2 s (link lost / page closed)
+setInterval(() => {
+  const hb = '{"hb":1}';
+  if (ws?.readyState === 1) ws.send(hb);
+  if (mq?.connected) mq.publish(mqTopic('cmd'), hb);
+}, 500);
 const mqTopic = leaf => `${$('#mqPrefix').value.trim()}/${leaf}`;
 function queueSend() {
   if (!$('#mirror').checked || !(ws?.readyState === 1 || mq?.connected) || sendTimer) return;
