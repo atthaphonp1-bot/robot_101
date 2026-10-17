@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Camera Placement</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="docs.css">
+</head>
+<body>
+    <main>
+        <div class="crumb"><a href="index.html">เอกสาร</a> › ตำแหน่งกล้อง</div>
+        <p class="eyebrow">กล้อง · Calibrate</p>
+        <h1>ติดกล้องตรงไหนดี</h1>
+        <p class="lede">เริ่มจาก<b>กล้องด้านบน</b> เพราะตรงกับทุกอย่างที่ทำแล้ว (Simulator, vision_pick.py, VLM) — ค่อยเพิ่มกล้องข้อมือทีหลังเมื่อต้องการความละเอียด</p>
+
+        <h2>3 ตำแหน่ง</h2>
+        <figure class="diagram" style="margin:0">
+            <svg viewBox="0 0 900 380" role="img" aria-label="ตำแหน่งติดกล้อง 3 แบบ มองจากด้านข้าง: ด้านบน ข้อมือ และฐานหมุน">
+  <path class="w gray" d="M40 330H860"/>
+  <path class="w blue" d="M230 300L300 190L400 230L430 300"/>
+  <path class="w gray" d="M760 330V60H520"/>
+  <path class="w green dash" d="M520 74L360 330"/>
+  <path class="w green dash" d="M520 74L680 330"/>
+  <path class="w purple dash" d="M419 262L395 300"/>
+  <path class="w purple dash" d="M419 262L460 300"/>
+  <path class="w red dash" d="M196 278L330 250"/>
+  <path class="w red dash" d="M196 278L330 320"/>
+  <rect class="blk" x="200" y="300" width="60" height="30" rx="6"/>
+  <circle class="blk" cx="230" cy="300" r="8"/>
+  <circle class="blk" cx="300" cy="190" r="8"/>
+  <circle class="blk" cx="400" cy="230" r="8"/>
+  <rect class="blk" x="420" y="300" width="20" height="10"/>
+  <rect class="blk-hi" x="470" y="306" width="24" height="24" rx="3"/>
+  <rect class="blk-hi" x="560" y="306" width="24" height="24" rx="3"/>
+  <rect class="blk-hi" x="500" y="50" width="40" height="24" rx="5"/>
+  <rect class="blk-hi" x="410" y="250" width="18" height="12" rx="3"/>
+  <rect class="blk-hi" x="170" y="270" width="26" height="16" rx="4"/>
+  <text class="t" x="560" y="40">① ด้านบน (eye-to-hand)</text>
+  <text class="t" x="440" y="215">② ข้อมือ (eye-in-hand)</text>
+  <text class="t" x="40" y="250">③ ฐานหมุน</text>
+  <text class="s" x="580" y="95">เห็นทั้งโต๊ะ · สูง 50–60 ซม.</text>
+  <text class="s" x="440" y="234">ใกล้ ละเอียด เห็นทีละส่วน</text>
+  <text class="s" x="40" y="268">หมุนตาม J1 · มองเฉียง</text>
+  <text class="s" x="470" y="352">วัตถุบนโต๊ะ</text>
+  <text class="s" x="200" y="352">ฐานแขน</text>
+</svg>
+            <div class="legend">
+                <span><i style="background:var(--c-green)"></i>① มุมมองด้านบน</span>
+                <span><i style="background:var(--c-purple)"></i>② มุมมองข้อมือ</span>
+                <span><i style="background:var(--c-red)"></i>③ มุมมองฐาน</span>
+            </div>
+        </figure>
+
+        <h2>เทียบข้อดีข้อเสีย</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>หัวข้อ</th>
+                    <th>① ด้านบน</th>
+                    <th>② ข้อมือ</th>
+                    <th>③ ฐานหมุน</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>เห็นทั้งฉาก</td>
+                    <td><span class="tag ok">ทั้งโต๊ะ</span></td>
+                    <td><span class="tag bad">ทีละส่วน</span></td>
+                    <td><span class="tag warn">หมุนหาได้</span></td>
+                </tr>
+                <tr>
+                    <td>ความละเอียด</td>
+                    <td>~0.8 มม./พิกเซล (640px คลุม 500 มม.)</td>
+                    <td>~0.15 มม./พิกเซล (ห่าง 100 มม.)</td>
+                    <td>ไม่คงที่ (มองเฉียง)</td>
+                </tr>
+                <tr>
+                    <td>แขนบัง</td>
+                    <td>บังตอนหยิบ → ถ่ายตอนอยู่ Home</td>
+                    <td>ไม่บัง</td>
+                    <td>แขนท่อนบนบังบ่อย</td>
+                </tr>
+                <tr>
+                    <td>Calibrate</td>
+                    <td><span class="tag ok">ง่าย · 4 จุดครั้งเดียว</span></td>
+                    <td><span class="tag bad">ยาก · hand-eye</span></td>
+                    <td><span class="tag warn">ปานกลาง</span></td>
+                </tr>
+                <tr>
+                    <td>น้ำหนัก/สาย</td>
+                    <td>ไม่กระทบแขน</td>
+                    <td>เพิ่มน้ำหนักข้อมือ · สายผ่านข้อต่อหมุน</td>
+                    <td>สายเดินง่ายกว่า</td>
+                </tr>
+                <tr>
+                    <td>ความสูงวัตถุ</td>
+                    <td>ไม่รู้ ต้องรู้ล่วงหน้า</td>
+                    <td>คำนวณได้จากท่าแขน</td>
+                    <td>พอประมาณได้</td>
+                </tr>
+                <tr>
+                    <td>เหมาะกับ</td>
+                    <td>VLM · หาวัตถุ · หยิบวาง</td>
+                    <td>จัดตำแหน่งละเอียด · ตรวจว่าหยิบติด</td>
+                    <td>สำรวจรอบตัว</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h2>คำแนะนำ</h2>
+        <div class="grid">
+            <div class="card">
+                <h3>① เริ่มที่นี่</h3>
+                <p>กล้อง USB ต่อ Pi 5 ติดสูง 50–60 ซม. ให้เห็น ~500×500 มม.</p>
+            </div>
+            <div class="card">
+                <h3>② เพิ่มทีหลัง</h3>
+                <p>กล้องตัวเล็กเบาเป็นตัวที่สอง — รอให้แขนแม่นขึ้นก่อน (เช่น servo ที่อ่านมุมได้)</p>
+            </div>
+            <div class="card">
+                <h3>③ ข้ามไปก่อน</h3>
+                <p>ยุ่งยากเกินประโยชน์สำหรับงานหยิบ-วางบนโต๊ะ</p>
+            </div>
+        </div>
+
+        <h2>Calibrate กล้องด้านบน (Pi 5)</h2>
+        <p class="lede" style="font-size:16px">Pi OS Lite ไม่มีหน้าจอ จึงถ่ายภาพบน Pi แล้วไปคลิกจุดบน Mac จากนั้นส่งผลกลับไป Pi</p>
+        <ol class="steps">
+            <li>
+                <b>ติดกล้อง</b>
+                <p>สูง 50–60 ซม. ตั้งฉากกับโต๊ะ ล็อกให้แน่น — ขยับกล้องเมื่อไหร่ต้อง calibrate ใหม่</p>
+            </li>
+            <li>
+                <b>จัดแสง</b>
+                <p>แสงสม่ำเสมอ ไม่มีเงาแข็ง หลีกแสงสะท้อนบนโต๊ะ</p>
+            </li>
+            <li>
+                <b>ทำเครื่องหมาย 4 จุด</b>
+                <p>ติดเทปกากบาทที่พิกัดหุ่น (มม. วัดจากกลางฐาน X=หน้า, Y=ซ้าย): (100, 150) · (250, 150) · (250, −150) · (100, −150) — ยิ่งห่างกันยิ่งแม่น</p>
+            </li>
+            <li>
+                <b>ถ่ายภาพบน Pi</b>
+                <p>SSH เข้า Pi แล้วรัน</p>
+                <pre><code>python3 -c "import cv2; c = cv2.VideoCapture(0); ok, f = c.read(); cv2.imwrite('cal.jpg', f); print(ok)"</code></pre>
+            </li>
+            <li>
+                <b>คัดลอกภาพมา Mac</b>
+                <p>รันบน Mac</p>
+                <pre><code>scp &lt;user&gt;@robotpi.local:cal.jpg .</code></pre>
+            </li>
+            <li>
+                <b>คลิก 4 จุดบน Mac</b>
+                <p>คลิกตามลำดับเดียวกับข้อ 3 แล้วพิมพ์ x,y ของแต่ละจุด → ได้ไฟล์ calib.json</p>
+                <pre><code>python3 vision/vision_pick.py --source cal.jpg --calibrate --calib calib.json</code></pre>
+            </li>
+            <li>
+                <b>ส่งผลกลับ Pi</b>
+                <pre><code>scp calib.json &lt;user&gt;@robotpi.local:~/robot_101/vision/</code></pre>
+            </li>
+            <li>
+                <b>ตรวจความแม่น</b>
+                <p>วางกล่องที่ตำแหน่งที่รู้ แล้วรันบน Pi — พิกัดที่พิมพ์ออกมาควรคลาดไม่เกิน 3 มม. ถ้าเกินให้ทำข้อ 4–7 ใหม่ · ต่อด้วยสั่งแขนไปลอยเหนือกล่องเพื่อดูด้วยตา</p>
+                <pre><code>cd ~/robot_101/vision &amp;&amp; python3 vision_pick.py --source 0 --dry-run --no-gui</code></pre>
+                <pre><code>python3 ~/robot_101/pi/arm.py ik X Y 80</code></pre>
+            </li>
+        </ol>
+
+        <div class="note">
+            <b>ทำไม 3 มม.:</b> ที่ 640px คลุม 500 มม. หนึ่งพิกเซล ≈ 0.8 มม. — คลาด 2–3 มม. ถือปกติ และพอสำหรับกล่อง 30 มม. ที่กริปเปอร์อ้าได้ 60 มม.
+        </div>
+
+        <footer>robot_101 · <code>sim/docs/camera.html</code></footer>
+    </main>
+</body>
+</html>
