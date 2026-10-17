@@ -78,10 +78,10 @@
       <td>คร่อม V+/GND ที่ PCA9685</td>
     </tr>
     <tr>
-      <td>ปุ่มฉุกเฉิน</td>
-      <td>E-STOP แบบมีหน้าสัมผัส NC + NO</td>
+      <td>สวิตช์ตัดไฟ servo (แนะนำ)</td>
+      <td>สวิตช์ ≥15A ต่ออนุกรมสายไฟ servo</td>
       <td>1</td>
-      <td>NC ตัดไฟ servo · NO แจ้ง ESP32</td>
+      <td>ตัดไฟได้แม้เว็บ/WiFi ล่ม · ไม่ต่อกับ ESP32</td>
     </tr>
     <tr>
       <td>จอ</td>
@@ -125,7 +125,6 @@
   <path class="w gray" d="M244 150H150"/>
   <path class="w blue" d="M244 190H150"/>
   <path class="w green" d="M244 230H150"/>
-  <path class="w red" d="M456 110H560"/>
   <path class="w purple" d="M456 190H560"/>
   <path class="w blue" d="M456 230H560"/>
   <path class="w gray" d="M380 375H560"/>
@@ -136,14 +135,12 @@
   <circle class="blk" cx="250" cy="150" r="6"/>
   <circle class="blk" cx="250" cy="190" r="6"/>
   <circle class="blk" cx="250" cy="230" r="6"/>
-  <circle class="blk" cx="450" cy="110" r="6"/>
   <circle class="blk" cx="450" cy="190" r="6"/>
   <circle class="blk" cx="450" cy="230" r="6"/>
   <rect class="blk" x="20" y="94" width="130" height="32" rx="8"/>
   <rect class="blk" x="20" y="134" width="130" height="32" rx="8"/>
   <rect class="blk" x="20" y="174" width="130" height="32" rx="8"/>
   <rect class="blk" x="20" y="214" width="130" height="32" rx="8"/>
-  <rect class="blk" x="560" y="94" width="180" height="32" rx="8"/>
   <rect class="blk" x="560" y="174" width="180" height="32" rx="8"/>
   <rect class="blk" x="560" y="214" width="180" height="32" rx="8"/>
   <rect class="blk" x="560" y="359" width="180" height="32" rx="8"/>
@@ -159,10 +156,8 @@
   <text class="s" x="30" y="155">GND ร่วมทุกตัว</text>
   <text class="s" x="30" y="195">PCA+OLED SDA</text>
   <text class="s" x="30" y="235">PCA+OLED SCL</text>
-  <text class="m" x="438" y="110" text-anchor="end">GPIO4</text>
   <text class="m" x="438" y="190" text-anchor="end">GPIO16 RX2</text>
   <text class="m" x="438" y="230" text-anchor="end">GPIO17 TX2</text>
-  <text class="s" x="570" y="115">E-STOP (NO) → GND</text>
   <text class="s" x="570" y="195">Pi Pin 8 TXD (ทาง UART)</text>
   <text class="s" x="570" y="235">Pi Pin 10 RXD (ทาง UART)</text>
   <text class="s" x="570" y="380">Raspberry Pi 5 (ไฟ + Serial)</text>
@@ -172,13 +167,13 @@
     <p class="s" style="margin:10px 4px 0;color:var(--muted);font-size:13px">ขา ESP32 ที่ใช้ในโปรเจกต์ — ดูชื่อขาที่พิมพ์บนบอร์ดจริง ตำแหน่งขาแต่ละยี่ห้อไม่เหมือนกัน</p>
   </figure>
   <figure class="diagram" style="margin:16px 0">
-    <svg viewBox="0 0 720 470" role="img" aria-label="แผนผังต่อสาย ESP32, PCA9685, OLED, E-STOP, Power supply และ Servo 6 ตัว">
+    <svg viewBox="0 0 720 470" role="img" aria-label="แผนผังต่อสาย ESP32, PCA9685, OLED, สวิตช์ตัดไฟ servo, Power supply และ Servo 6 ตัว">
   <!-- ESP32 -->
   <rect class="blk" x="20" y="40" width="150" height="190" rx="14"/>
   <text class="t" x="34" y="64">ESP32 DevKit</text><text class="s" x="34" y="82">WiFi · USB 5V</text>
   <text class="pin" x="162" y="74" text-anchor="end">3V3</text><text class="pin" x="162" y="99" text-anchor="end">GND</text>
   <text class="pin" x="162" y="124" text-anchor="end">GPIO21 SDA</text><text class="pin" x="162" y="149" text-anchor="end">GPIO22 SCL</text>
-  <text class="pin" x="162" y="174" text-anchor="end">GPIO4</text>
+  
   <!-- OLED -->
   <rect class="blk" x="260" y="20" width="170" height="92" rx="12"/>
   <text class="t" x="360" y="50" text-anchor="middle">OLED SSD1306</text><text class="s" x="360" y="68" text-anchor="middle">I2C 0x3C</text>
@@ -194,22 +189,20 @@
   <rect class="blk" x="20" y="290" width="150" height="90" rx="14"/>
   <text class="t" x="34" y="314">Power Supply</text><text class="s" x="34" y="332">5–6V 10A (servo)</text>
   <text class="pin" x="162" y="319" text-anchor="end">+</text><text class="pin" x="162" y="359" text-anchor="end">−</text>
-  <!-- E-STOP -->
-  <rect class="blk" x="230" y="404" width="70" height="34" rx="10"/>
-  <text class="t" x="265" y="426" text-anchor="middle" style="fill:#ff453a">E-STOP</text>
+  <!-- optional servo power kill switch -->
+  <rect class="blk" x="230" y="404" width="70" height="34" rx="10" stroke-dasharray="5 4"/>
+  <text class="s" x="265" y="419" text-anchor="middle">สวิตช์ตัดไฟ</text><text class="s" x="265" y="433" text-anchor="middle">(แนะนำ)</text>
 
   <!-- I2C + logic power (3V3) -->
   <path class="w c-3v3" d="M170 70H205V35H260M205 70V150H260"/>
   <path class="w c-gnd" d="M170 95H215V55H260M215 95V175H260M215 175V450"/>
   <path class="w c-sda" d="M170 120H225V95H260M225 120V200H260"/>
   <path class="w c-scl" d="M170 145H235V75H260M235 145V225H260"/>
-  <!-- servo power through E-STOP + capacitor -->
+  <!-- servo power through the optional kill switch + capacitor -->
   <path class="w c-pwr" d="M170 315H185V420H230M300 420H320V330M320 365H350V384"/>
   <path class="w c-gnd" d="M170 355H175V450H380V330M350 394V450"/>
   <path class="w c-gnd" d="M338 384H362M338 394H362"/>
   <text class="s" x="368" y="393">C 1000µF</text>
-  <!-- E-STOP sense -->
-  <path class="w c-sig" d="M170 170H195V395H265V404"/>
   <g class="dot"><circle cx="205" cy="70" r="3.5" fill="#ff9f0a"/><circle cx="215" cy="95" r="3.5" fill="currentColor"/>
     <circle cx="225" cy="120" r="3.5" fill="#0a84ff"/><circle cx="235" cy="145" r="3.5" fill="#30d158"/>
     <circle cx="320" cy="365" r="3.5" fill="#ff453a"/><circle cx="215" cy="450" r="3.5" fill="currentColor"/><circle cx="350" cy="450" r="3.5" fill="currentColor"/></g>
@@ -220,9 +213,9 @@
     <div class="legend">
       <span><i style="background:#ff9f0a"></i>3V3 ลอจิก</span><span><i style="background:#ff453a"></i>5–6V servo</span>
       <span><i style="background:var(--text)"></i>GND</span><span><i style="background:#0a84ff"></i>SDA</span>
-      <span><i style="background:#30d158"></i>SCL</span><span><i style="background:#bf5af2"></i>PWM</span><span><i style="background:#64d2ff"></i>E-STOP sense</span>
+      <span><i style="background:#30d158"></i>SCL</span><span><i style="background:#bf5af2"></i>PWM</span>
     </div>
-    <p class="s" style="margin:10px 4px 0;color:var(--muted);font-size:13px">ผังต่อสายทั้งหมด: ESP32 · PCA9685 · OLED · E-STOP · ไฟ servo แยก · servo 6 ตัว (จุด = สายที่ต่อถึงกันจริง)</p>
+    <p class="s" style="margin:10px 4px 0;color:var(--muted);font-size:13px">ผังต่อสายทั้งหมด: ESP32 · PCA9685 · OLED · สวิตช์ตัดไฟ (แนะนำ) · ไฟ servo แยก · servo 6 ตัว (จุด = สายที่ต่อถึงกันจริง)</p>
   </figure>
 
 <table>
@@ -241,7 +234,7 @@
     </tr>
     <tr>
       <td>GND</td>
-      <td>PCA9685 GND, OLED GND, PSU −, E-STOP (NO)</td>
+      <td>PCA9685 GND, OLED GND, PSU −</td>
       <td>GND ต้องต่อร่วมกันทั้งหมด</td>
     </tr>
     <tr>
@@ -253,11 +246,6 @@
       <td>GPIO22 (SCL)</td>
       <td>PCA9685 SCL, OLED SCL</td>
       <td></td>
-    </tr>
-    <tr>
-      <td>GPIO4</td>
-      <td>E-STOP หน้าสัมผัส NO → GND</td>
-      <td>กด = สลับหยุด/ทำต่อ</td>
     </tr>
     <tr>
       <td>GPIO16 (RX2) / GPIO17 (TX2)</td>
@@ -312,8 +300,8 @@
 <h3>ไฟเลี้ยง</h3>
 <ol class="steps">
   <li>
-    <b>PSU + → E-STOP (NC) → PCA9685 V+</b>
-    <p>กด E-STOP แล้วไฟ servo ตัดทันที</p>
+    <b>PSU + → สวิตช์ตัดไฟ (แนะนำ) → PCA9685 V+</b>
+    <p>ปิดสวิตช์แล้วไฟ servo ตัดทันที แม้เว็บหรือ WiFi ล่ม</p>
   </li>
   <li>
     <b>PSU − → PCA9685 GND → ESP32 GND</b>
@@ -333,7 +321,7 @@
 <h3 id="power-single">ทางเลือก: ไฟจากแหล่งเดียวทั้งระบบ</h3>
 <p>ใช้ PSU 12V ตัวเดียว แล้วแยกเป็น 2 สายผ่าน buck converter — <b>ห้ามต่อ servo กับ Pi เข้า 5V เดียวกันตรง ๆ</b> เพราะตอน servo กระชาก (ได้ถึง ~2.5A ต่อตัว) ไฟจะตกแล้ว Pi รีบูต</p>
 <figure class="diagram" style="margin:16px 0">
-    <svg viewBox="0 0 830 370" role="img" aria-label="ผังไฟจากแหล่งเดียว: PSU 12V แยกเป็น buck 6V ผ่าน E-STOP ไป servo และ buck 5.1V ไป Raspberry Pi 5">
+    <svg viewBox="0 0 830 370" role="img" aria-label="ผังไฟจากแหล่งเดียว: PSU 12V แยกเป็น buck 6V ผ่านสวิตช์ตัดไฟไป servo และ buck 5.1V ไป Raspberry Pi 5">
   <path class="w red" d="M120 180H160"/>
   <path class="w red" d="M310 165H350V80H380"/>
   <path class="w red" d="M450 80H480"/>
@@ -360,7 +348,7 @@
   <text class="s" x="172" y="190">เช่น LRS-150-12</text>
   <text class="s" x="172" y="206">ตัวเดียวทั้งระบบ</text>
   <text class="s" x="388" y="85">ฟิวส์ 15A</text>
-  <text class="t" x="488" y="85">E-STOP</text>
+  <text class="t" x="488" y="85">สวิตช์ servo</text>
   <text class="t" x="610" y="78">Buck 6V</text>
   <text class="s" x="610" y="96">≥ 20A</text>
   <text class="t" x="750" y="76">PCA9685</text>
@@ -377,7 +365,7 @@
   <text class="s" x="612" y="240">5.1V</text>
   <text class="s" x="740" y="40">6V</text>
 </svg>
-    <p style="margin:10px 4px 0;color:var(--muted);font-size:13px">PSU ตัวเดียว → 2 สาย: servo (6V ผ่าน E-STOP) และ Pi 5 (5.1V) · GND ร่วม</p>
+    <p style="margin:10px 4px 0;color:var(--muted);font-size:13px">PSU ตัวเดียว → 2 สาย: servo (6V ผ่านสวิตช์ตัดไฟ) และ Pi 5 (5.1V) · GND ร่วม</p>
   </figure>
 
 <table>
@@ -438,7 +426,7 @@
 
 <ol class="steps">
   <li><b>ตั้งแรงดัน buck ก่อนต่ออุปกรณ์</b><p>วัดด้วยมัลติมิเตอร์ให้ได้ 6.0V และ 5.1V ตอนยังไม่มีโหลด</p></li>
-  <li><b>E-STOP อยู่ที่สาย servo เท่านั้น</b><p>กดแล้ว servo หยุด แต่ Pi กับ ESP32 ยังทำงานต่อ</p></li>
+  <li><b>สวิตช์ตัดไฟอยู่ที่สาย servo เท่านั้น</b><p>ปิดแล้ว servo หมดแรง แต่ Pi กับ ESP32 ยังทำงานต่อ</p></li>
   <li><b>Pi 5 กับ buck ที่ไม่มี PD</b><p>Pi จะเตือนไฟไม่พอและจำกัดกระแส USB — ถ้า buck จ่าย 5A ได้จริง ให้เพิ่มบรรทัดนี้ใน <code>/boot/firmware/config.txt</code></p><pre><code>usb_max_current_enable=1</code></pre></li>
   <li><b>ต่อ GND ร่วม</b><p>GND ของ PSU, buck ทั้งสอง, PCA9685, Pi และ ESP32 ต้องต่อถึงกัน</p></li>
 </ol>
@@ -451,7 +439,7 @@
   <li><b>โหลดโค้ด</b><p></p><pre><code>git clone https://github.com/atthaphonp1-bot/robot_101.git</code></pre></li>
   <li><b>สร้าง secrets.h</b><p>คัดลอก firmware/src/secrets.example.h เป็น secrets.h แล้วใส่ WIFI_SSID/WIFI_PASS ของ router บ้าน (2.4 GHz), AP_PASS, MQTT_PREFIX และ MQTT_USER/MQTT_PASS ที่ตั้งตอนรัน setup.sh บน Pi — ไฟล์นี้ไม่ขึ้น GitHub</p><pre><code>cp firmware/src/secrets.example.h firmware/src/secrets.h</code></pre></li>
   <li><b>เปิดโหมดบอร์ดจริง</b><p>ใน firmware/src/main.cpp แก้ <code>#define USE_PCA9685 0</code> เป็น <code>1</code> (0 ใช้กับ Wokwi เท่านั้น)</p></li>
-  <li><b>ชี้ MQTT ไปที่ Pi</b><p>ใน main.cpp ตั้ง <code>MQTT_HOST</code> เป็น IP ของ Pi (เช่น "192.168.1.50") — ESP32 ใช้ชื่อ .local ไม่ได้ · ดู IP ได้จากผลสรุปตอนท้าย setup.sh</p></li>
+  <li><b>ชี้ MQTT ไปที่ Pi</b><p>ใน <code>secrets.h</code> ตั้ง <code>MQTT_HOST</code> เป็น IP ของ Pi (เช่น "192.168.1.50") — ESP32 ใช้ชื่อ .local ไม่ได้ · ดู IP ได้จากผลสรุปตอนท้าย setup.sh</p></li>
   <li><b>อัปโหลด</b><p>เสียบ ESP32 เข้า Mac แล้วรันในโฟลเดอร์ firmware (หรือกดปุ่ม Upload ของ PlatformIO)</p><pre><code>cd robot_101/firmware &amp;&amp; pio run -t upload</code></pre></li>
   <li><b>ดู Serial Monitor</b><p>ควรเห็น WiFi → IP → Ready. และ MQTT connected — ลองพิมพ์ {"home":1} ต้องได้ {"ok":1}</p><pre><code>pio device monitor -b 115200</code></pre></li>
 </ol>
@@ -512,10 +500,10 @@
 <ol class="steps">
   <li><b>ต่อไฟและเปิดบอร์ด (ยังไม่ใส่ horn)</b><p>firmware จะสั่ง servo ทุกตัวไปท่า Home ตอนบูต</p></li>
   <li><b>ใส่ horn และแขนทีละข้อ</b><p>จัดท่าให้ตรงตามตาราง แล้วขันสกรูกลาง horn</p></li>
-  <li><b>ทดสอบทีละข้อ ความเร็วต่ำ</b><p>ส่ง {"speed":30} ก่อน แล้วขยับทีละข้อ มืออยู่ใกล้ E-STOP</p></li>
+  <li><b>ทดสอบทีละข้อ ความเร็วต่ำ</b><p>ส่ง {"speed":30} ก่อน แล้วขยับทีละข้อ มืออยู่ใกล้ปุ่ม STOP บนเว็บและสวิตช์ตัดไฟ</p></li>
   <li><b>ปรับ offset ถ้ามุมเพี้ยน</b><p>แก้ค่า offset/dir ในตาราง JOINTS ของ main.cpp และใน Simulator ให้เท่ากัน</p></li>
 </ol>
-<div class="note"><b>ระวัง:</b> อย่าหมุน servo ด้วยมือตอนมีไฟ · ถ้า servo ร้อนหรือส่งเสียงคราง แปลว่าดันกลไกอยู่ กด E-STOP แล้วจัด horn ใหม่</div>
+<div class="note"><b>ระวัง:</b> อย่าหมุน servo ด้วยมือตอนมีไฟ · ถ้า servo ร้อนหรือส่งเสียงคราง แปลว่าดันกลไกอยู่ กด STOP บนเว็บหรือปิดสวิตช์ตัดไฟ แล้วจัด horn ใหม่</div>
 <h2 id="pi">5 · ตั้งค่า Raspberry Pi 5</h2>
 <ol class="steps">
   <li>
@@ -674,6 +662,16 @@
   </li>
 </ol>
 
+<h3 id="deadman">ความปลอดภัย: หยุดจากเว็บ + dead-man</h3>
+<p>โปรเจกต์นี้ไม่มีปุ่ม E-STOP ฮาร์ดแวร์ หยุดแขนได้ 3 ทาง:</p>
+<table>
+  <tr><th>ทาง</th><th>ทำงานยังไง</th><th>ข้อจำกัด</th></tr>
+  <tr><td>ปุ่ม STOP บนเว็บ/มือถือ</td><td>ส่ง <code>{"stop":1}</code> 3 ครั้ง (MQTT QoS 1)</td><td>ต้องมีเน็ต/WiFi และหน้าเว็บทำงาน</td></tr>
+  <tr><td>dead-man ใน firmware</td><td>เว็บส่ง <code>{"hb":1}</code> ทุก 0.5 วิ · เงียบเกิน 2 วิ → แขนหยุดค้างท่า และไม่รับคำสั่งขยับจนกว่าจะได้ heartbeat ใหม่ · จอ OLED ขึ้น NO LINK</td><td><b>แค่ค้างท่า ไม่ได้ตัดไฟ servo</b></td></tr>
+  <tr><td>สวิตช์ตัดไฟ servo (แนะนำ)</td><td>ตัดไฟ servo จริง</td><td>ต้องเอื้อมถึง</td></tr>
+</table>
+<div class="note"><b>สำคัญ:</b> dead-man ป้องกันกรณีเว็บ/WiFi หลุด แต่ถ้า servo ผิดปกติหรือชนแล้วดันอยู่ ต้องตัดไฟเท่านั้น — ติดสวิตช์ตัดไฟไว้ใกล้มือ · <code>arm.py</code> และ <code>vision_pick.py</code> ส่ง heartbeat ให้อัตโนมัติ</div>
+
 <h2 id="trouble">7 · แก้ปัญหา</h2>
 <table>
   <thead>
@@ -696,8 +694,8 @@
     </tr>
     <tr>
       <td>servo ไม่ขยับเลย</td>
-      <td>USE_PCA9685 ยังเป็น 0 หรือ E-STOP ค้าง</td>
-      <td>ตั้งเป็น 1 แล้วอัปโหลดใหม่ · ดูจอ OLED ว่าขึ้น E-STOP ไหม</td>
+      <td>USE_PCA9685 ยังเป็น 0 หรือ dead-man หยุดแขนไว้</td>
+      <td>ตั้งเป็น 1 แล้วอัปโหลดใหม่ · ถ้าจอ OLED ขึ้น NO LINK ให้เชื่อมเว็บใหม่ (heartbeat กลับมาก็สั่งได้)</td>
     </tr>
     <tr>
       <td>OLED ไม่ติด</td>
@@ -727,7 +725,7 @@
   </tbody>
 </table>
 
-<div class="note"><b>ความปลอดภัย:</b> ทดสอบครั้งแรกด้วยความเร็วต่ำ มืออยู่ที่ E-STOP เสมอ · อย่าใช้ broker สาธารณะกับแขนจริง</div>
+<div class="note"><b>ความปลอดภัย:</b> ทดสอบครั้งแรกด้วยความเร็วต่ำ มืออยู่ที่ปุ่ม STOP และสวิตช์ตัดไฟ · ใช้ broker บน Pi ที่มีรหัสผ่านเท่านั้น ห้ามใช้ broker สาธารณะกับแขนจริง</div>
 
   <footer>robot_101 · <code>sim/docs/build-guide.html</code></footer>
 </main>

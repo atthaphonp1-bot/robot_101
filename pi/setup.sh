@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
-# Raspberry Pi 5 setup (Pi 3/4 should work too, untested) for robot_101 — run once on the Pi (Raspberry Pi OS Lite 64-bit):
+# Raspberry Pi 5 setup (target board; Pi 4 likely works, untested) for robot_101 — run once on the Pi (Raspberry Pi OS Lite 64-bit):
 #   git clone https://github.com/atthaphonp1-bot/robot_101.git ~/robot_101
 #   bash ~/robot_101/pi/setup.sh
+# Security: Mosquitto is LAN-only, password-protected, NOT encrypted (no TLS/ACL) — keep it off the internet.
 # Installs: Mosquitto (password, :1883 for ESP32, :9001 WebSocket for browsers),
 #           OpenCV for vision_pick.py, and a web server for sim/ on :8080 (starts at boot).
 # Safe to re-run: it rewrites its own config and keeps everything else.
@@ -102,9 +103,9 @@ cat <<EOF
  ในหน้าเว็บ: Broker = ws://$HOST:9001   user = $MQ_USER
 
  firmware/src/secrets.h:
-   MQTT_USER = "$MQ_USER"   MQTT_PASS = (รหัสที่เพิ่งตั้ง)
- firmware/src/main.cpp:
    MQTT_HOST = "$IP"        (ESP32 ไม่รู้จัก .local ใช้ IP แทน)
+   MQTT_USER = "$MQ_USER"   MQTT_PASS = (รหัสที่เพิ่งตั้ง)
+   MQTT_PREFIX = ชื่อเฉพาะของคุณ (ห้ามว่าง ห้ามขึ้นต้น robot101/)
 
  ทดสอบ: mosquitto_sub -h localhost -u $MQ_USER -P '<รหัส>' -t '#' -v
 ────────────────────────────────────────────────────────

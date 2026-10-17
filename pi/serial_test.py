@@ -51,8 +51,8 @@ def run_serial_tests(port, tests=TESTS, timeout_lines=20):
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description="Run serial servo tests")
-    parser.add_argument('device', nargs='?', default='/dev/serial0',
-                        help="Serial device path (default: %(default)s)")
+    parser.add_argument('device', nargs='?', default='/dev/ttyUSB0',
+                        help="Serial device (default: %(default)s · Pi UART: /dev/serial0)")
     parser.add_argument('--baud', type=int, default=115200,
                         help="Baud rate (default: %(default)s)")
     args = parser.parse_args(argv)

@@ -23,8 +23,7 @@ const int SERVO_PINS[6] = {13, 12, 14, 27, 26, 25};
 // WiFi / AP / MQTT credentials live in secrets.h (git-ignored). Copy secrets.example.h to start.
 #include "secrets.h"
 const char* AP_SSID = "RobotArm";        // fallback access point -> 192.168.4.1
-const int ESTOP_PIN = 4;                 // button to GND, toggles E-stop
-const uint32_t DEADMAN_MS = 2000;        // web UIs send {"hb":1} every 500 ms; silence this long = hold position
+const uint32_t DEADMAN_MS = 2000;        // controllers send {"hb":1} every 500 ms; silence this long = hold position
 // Option B: commands from Raspberry Pi over UART (Pi TXD -> GPIO16, Pi RXD <- GPIO17, GND)
 #define USE_SERIAL2 1
 const int SERIAL2_RX = 16, SERIAL2_TX = 17;
@@ -32,8 +31,7 @@ const int SERIAL2_RX = 16, SERIAL2_TX = 17;
 // ---- MQTT: control over the internet ----------------------------------------
 #define USE_MQTT 1
 #define MQTT_TLS 0                         // 1 = TLS (HiveMQ Cloud port 8883)
-const char* MQTT_HOST = "broker.hivemq.com"; // public test broker: anyone can publish, use a unique prefix
-const int MQTT_PORT = 1883;
+// MQTT_HOST / MQTT_PORT / MQTT_PREFIX come from secrets.h — use the private broker on the Pi for a real arm
 
 // joint angle = (servo - offset) * dir  — same table as the simulator
 struct Joint { const char* key; float minA, maxA, home, offset, dir; };
@@ -50,7 +48,6 @@ const float L_BASE = 95, L_UPPER = 120, L_FORE = 115, TCP = 95;   // mm
 // ---- state ------------------------------------------------------------------
 float cur[6], tgt[6], spd[6];
 float speedDps = 90;
-bool estop = false;
 uint32_t lastHb = 0;                     // dead-man: armed by the first heartbeat, trips once when they stop
 bool deadmanArmed = false, deadmanTripped = false;
 WebSocketsServer ws(81);
@@ -110,7 +107,7 @@ bool autoIK(float x, float y, float z, float pitch, float out[4]) {
 }
 
 // ---- command protocol ---------------------------------------------------------
-// {"j":[6]} {"ik":[x,y,z,pitch]} {"grip":v} {"speed":v} {"home":1} {"stop":1}
+// {"j":[6]} {"ik":[x,y,z,pitch(,0=exact pitch)]} {"grip":v} {"speed":v} {"home":1} {"stop":1} {"status":1} {"hb":1}
 String handleCommand(const char* txt) {
   JsonDocument d;
   if (deserializeJson(d, txt)) return "{\"err\":\"bad json\"}";
@@ -119,14 +116,13 @@ String handleCommand(const char* txt) {
     bool moving = false;
     for (int i = 0; i < 6; i++) if (fabsf(tgt[i] - cur[i]) > 0.5f) moving = true;
     char buf[128];
-    snprintf(buf, sizeof buf, "{\"status\":[%.0f,%.0f,%.0f,%.0f,%.0f,%.0f],\"moving\":%s,\"estop\":%s,\"deadman\":%s}",
-             cur[0], cur[1], cur[2], cur[3], cur[4], cur[5], moving ? "true" : "false", estop ? "true" : "false",
-             deadmanTripped ? "true" : "false");
+    snprintf(buf, sizeof buf, "{\"status\":[%.0f,%.0f,%.0f,%.0f,%.0f,%.0f],\"moving\":%s,\"deadman\":%s}",
+             cur[0], cur[1], cur[2], cur[3], cur[4], cur[5], moving ? "true" : "false", deadmanTripped ? "true" : "false");
     return String(buf);
   }
   if (d["stop"].is<int>()) { setTargets(cur); return "{\"ok\":\"stop\"}"; }
   if (d["speed"].is<float>()) { speedDps = constrain(d["speed"].as<float>(), 10, 360); return "{\"ok\":\"speed\"}"; }
-  if (estop) return "{\"err\":\"estop\"}";
+  if (deadmanTripped) return "{\"err\":\"deadman\"}";   // motion locked until a new {"hb":1}
 
   float a[6];
   memcpy(a, tgt, sizeof a);
@@ -135,10 +131,12 @@ String handleCommand(const char* txt) {
     for (int i = 0; i < 6 && i < (int)j.size(); i++) if (j[i].is<float>()) a[i] = j[i];
   } else if (d["ik"].is<JsonArray>()) {
     JsonArray k = d["ik"];
+    if (k.size() < 3 || !k[0].is<float>() || !k[1].is<float>() || !k[2].is<float>()) return "{\"err\":\"ik needs x,y,z\"}";
     float o[4];
     float pitch = k.size() > 3 ? k[3].as<float>() : -90;
-    if (!autoIK(k[0], k[1], k[2], pitch, o)) return "{\"err\":\"unreachable\"}";
-    memcpy(a, o, sizeof o);
+    bool search = !(k.size() > 4 && k[4].as<int>() == 0);   // 5th value 0 = use exactly this pitch (like the sim)
+    if (!(search ? autoIK(k[0], k[1], k[2], pitch, o) : solveIK(k[0], k[1], k[2], pitch, o))) return "{\"err\":\"unreachable\"}";
+    for (int i = 0; i < 4; i++) a[i] = roundf(o[i] * 10) / 10;   // 0.1 deg, same as the sim
   } else if (d["grip"].is<float>()) {
     a[5] = d["grip"];
   } else if (d["home"].is<int>()) {
@@ -157,6 +155,10 @@ void pollLines(Stream& port, String& buf, String (*handler)(const char*)) {
         int ic = port.read();               // read next byte, -1 if none
         if (ic < 0) break;                  // safety guard
         char c = static_cast<char>(ic);
+        if (buf == "\x01") {               // discarding the rest of an over-long line
+            if (c == '\n' || c == '\r') buf = "";
+            continue;
+        }
         if (c == '\n' || c == '\r') {       // line terminator
             if (buf.length() > 0) {
                 String reply = handler(buf.c_str());
@@ -169,8 +171,8 @@ void pollLines(Stream& port, String& buf, String (*handler)(const char*)) {
             // if buf empty, ignore extra terminators (e.g., CR+LF)
         } else {
             buf += c;                        // accumulate character
-            if (buf.length() > 256) {        // overflow protection
-                buf = "";
+            if (buf.length() > 256) {        // overflow protection: drop until the next newline
+                buf = "\x01";
                 port.println("{\"err\":\"line too long\"}");
             }
         }
@@ -197,6 +199,8 @@ WiFiClient mqttNet;
 #endif
 PubSubClient mqtt(mqttNet);
 String topic(const char* leaf) { return String(MQTT_PREFIX) + "/" + leaf; }
+// refuse the example/public prefix: it is published on GitHub, anyone could drive the arm
+bool mqttAllowed() { return *MQTT_PREFIX && strncmp(MQTT_PREFIX, "robot101/", 9) != 0; }
 
 void onMqtt(char* t, byte* payload, unsigned int len) {
   String msg;
@@ -207,10 +211,10 @@ void onMqtt(char* t, byte* payload, unsigned int len) {
 }
 
 void mqttLoop() {
-  if (WiFi.status() != WL_CONNECTED) return;   // AP fallback = no internet
+  if (!mqttAllowed() || WiFi.status() != WL_CONNECTED) return;   // AP fallback = no internet
   if (mqtt.connected()) { mqtt.loop(); return; }
-  static uint32_t lastTry = 0;
-  if (lastTry && millis() - lastTry < 3000) return;
+  static uint32_t lastTry = 0, backoff = 3000;                   // 3 s -> 30 s while the broker is down
+  if (lastTry && millis() - lastTry < backoff) return;
   lastTry = millis();
   String id = "arm-" + String((uint32_t)ESP.getEfuseMac(), HEX);
   String st = topic("status");
@@ -219,8 +223,10 @@ void mqttLoop() {
     mqtt.publish(st.c_str(), "online", true);
     mqtt.subscribe(topic("cmd").c_str());
     Serial.printf("MQTT connected: %s/cmd\n", MQTT_PREFIX);
+    backoff = 3000;
   } else {
-    Serial.printf("MQTT failed rc=%d\n", mqtt.state());
+    backoff = min<uint32_t>(backoff * 2, 30000);
+    Serial.printf("MQTT failed rc=%d, retry in %lus\n", mqtt.state(), (unsigned long)(backoff / 1000));
   }
 }
 #endif
@@ -230,12 +236,11 @@ void drawOled() {
   if (!oledOk) return;
   oled.clearDisplay();
   oled.setCursor(0, 0);
-  oled.println(WiFi.getMode() == WIFI_AP ? WiFi.softAPIP() : WiFi.localIP());
+  oled.println(WiFi.status() == WL_CONNECTED ? WiFi.localIP() : WiFi.softAPIP());
   oled.printf("J1 %3.0f J2 %3.0f J3 %3.0f\n", cur[0], cur[1], cur[2]);
   oled.printf("J4 %3.0f J5 %3.0f G  %3.0f\n", cur[3], cur[4], cur[5]);
   oled.printf("spd %.0f  ws %u\n", speedDps, ws.connectedClients());
-  if (estop) { oled.setTextSize(2); oled.println("E-STOP"); oled.setTextSize(1); }
-  else if (deadmanTripped) { oled.setTextSize(2); oled.println("NO LINK"); oled.setTextSize(1); }
+  if (deadmanTripped) { oled.setTextSize(2); oled.println("NO LINK"); oled.setTextSize(1); }
   oled.display();
 }
 
@@ -245,7 +250,6 @@ void setup() {
 #if USE_SERIAL2
   Serial2.begin(115200, SERIAL_8N1, SERIAL2_RX, SERIAL2_TX);
 #endif
-  pinMode(ESTOP_PIN, INPUT_PULLUP);
   Wire.begin(21, 22);
 
 #if USE_PCA9685
@@ -265,7 +269,11 @@ void setup() {
   Serial.print("WiFi");
   for (uint32_t t = millis(); WiFi.status() != WL_CONNECTED && millis() - t < 10000;) { delay(250); Serial.print('.'); }
   if (WiFi.status() == WL_CONNECTED) Serial.printf("\nIP: %s\n", WiFi.localIP().toString().c_str());
-  else { WiFi.softAP(AP_SSID, AP_PASS); Serial.printf("\nAP %s  IP: %s\n", AP_SSID, WiFi.softAPIP().toString().c_str()); }
+  else {   // keep a hotspot up and keep retrying the home WiFi in loop()
+    WiFi.mode(WIFI_AP_STA);
+    WiFi.softAP(AP_SSID, AP_PASS);
+    Serial.printf("\nAP %s  IP: %s\n", AP_SSID, WiFi.softAPIP().toString().c_str());
+  }
 
   ws.begin();
   ws.onEvent(onWs);
@@ -276,15 +284,34 @@ void setup() {
   mqtt.setServer(MQTT_HOST, MQTT_PORT);
   mqtt.setCallback(onMqtt);
   mqtt.setBufferSize(512);
+  mqtt.setSocketTimeout(2);   // an unreachable broker must not freeze servos for 15 s
+  if (!mqttAllowed()) Serial.println("MQTT OFF: set a unique MQTT_PREFIX in secrets.h (not empty, not robot101/...)");
+  if (strstr(MQTT_HOST, "hivemq.com")) Serial.println("WARNING: public MQTT broker - use the private broker on the Pi for a real arm");
 #endif
   Serial.println("Ready. Send JSON per line, e.g. {\"ik\":[180,0,60,-90]}");
 }
 
 void loop() {
   ws.loop();
+  bool stalled = false;
 #if USE_MQTT
+  uint32_t t0 = millis();
   mqttLoop();
+  if (millis() - t0 > 300) { stalled = true; ws.loop(); }   // a slow connect: take heartbeats that queued meanwhile
 #endif
+
+  // AP fallback: retry the home WiFi every 60 s, drop the hotspot once connected
+  static uint32_t lastWifiTry = 0;
+  if (WiFi.getMode() == WIFI_AP_STA) {
+    if (WiFi.status() == WL_CONNECTED) {
+      WiFi.softAPdisconnect(true);
+      WiFi.mode(WIFI_STA);
+      Serial.printf("WiFi reconnected, IP: %s\n", WiFi.localIP().toString().c_str());
+    } else if (millis() - lastWifiTry > 60000) {
+      lastWifiTry = millis();
+      WiFi.begin(WIFI_SSID, WIFI_PASS);
+    }
+  }
 
   // serial: one JSON command per line (USB, and Pi UART on Serial2)
   static String line0;
@@ -294,20 +321,10 @@ void loop() {
   pollLines(Serial2, line2, handleCommand);
 #endif
 
-  // E-stop toggle (debounced falling edge)
-  static bool lastBtn = HIGH;
-  static uint32_t btnT = 0;
-  bool b = digitalRead(ESTOP_PIN);
-  if (b != lastBtn && millis() - btnT > 50) {
-    btnT = millis();
-    lastBtn = b;
-    if (b == LOW) { estop = !estop; setTargets(cur); Serial.println(estop ? "E-STOP ON" : "E-STOP OFF"); }
-  }
-
   // motion @ 50 Hz
   static uint32_t lastMove = millis();
   uint32_t now = millis();
-  if (deadmanArmed && now - lastHb > DEADMAN_MS) {   // controller went silent: stop and hold position
+  if (deadmanArmed && !stalled && now - lastHb > DEADMAN_MS) {   // skip one check right after our own stall   // controller went silent: stop and hold position
     deadmanArmed = false;
     deadmanTripped = true;
     setTargets(cur);
@@ -316,8 +333,7 @@ void loop() {
   if (now - lastMove >= 20) {
     float dt = (now - lastMove) / 1000.0f;
     lastMove = now;
-    if (!estop)
-      for (int i = 0; i < 6; i++) {
+    for (int i = 0; i < 6; i++) {
         float d = tgt[i] - cur[i], m = spd[i] * dt;
         cur[i] += fabsf(d) <= m ? d : (d > 0 ? m : -m);
         writeServo(i, cur[i]);
@@ -331,9 +347,8 @@ void loop() {
     bool moving = false;
     for (int i = 0; i < 6; i++) if (fabsf(tgt[i] - cur[i]) > 0.5f) moving = true;
     char buf[128];
-    snprintf(buf, sizeof buf, "{\"state\":[%.0f,%.0f,%.0f,%.0f,%.0f,%.0f],\"moving\":%s,\"estop\":%s,\"deadman\":%s}",
-             cur[0], cur[1], cur[2], cur[3], cur[4], cur[5], moving ? "true" : "false", estop ? "true" : "false",
-             deadmanTripped ? "true" : "false");
+    snprintf(buf, sizeof buf, "{\"state\":[%.0f,%.0f,%.0f,%.0f,%.0f,%.0f],\"moving\":%s,\"deadman\":%s}",
+             cur[0], cur[1], cur[2], cur[3], cur[4], cur[5], moving ? "true" : "false", deadmanTripped ? "true" : "false");
     ws.broadcastTXT(buf);
 #if USE_MQTT
     static uint32_t lastPub = 0;                        // internet: 10 Hz while moving, 1 Hz idle

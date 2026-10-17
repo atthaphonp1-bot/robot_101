@@ -16,7 +16,7 @@
  [ESP32  ── Firmware]  ◄── USB Serial ──► [PC: Python / ROS 2 / Simulator]
     │ I2C        │ GPIO
     ▼            ▼
- [PCA9685]   [OLED, ปุ่ม, Joystick, E-Stop]
+ [PCA9685]   [OLED, ปุ่ม, Joystick]
     │ PWM
     ▼
  [Servo x6] ◄── [Power Supply 5–6V แยก]
@@ -78,7 +78,7 @@
 | Capacitor 1000–2200µF 16V | กันไฟตกตอน servo กระชาก | ฿10–20 |
 | OLED 0.96" SSD1306 (I2C) | แสดงมุมแต่ละข้อ, สถานะ WiFi, IP | ฿60–120 |
 | Joystick module x2 / Potentiometer x6 | ควบคุมด้วยมือ | ฿50–150 |
-| ปุ่ม E-Stop (ปุ่มหยุดฉุกเฉิน) | ตัดไฟ servo | ฿50–100 |
+| สวิตช์ตัดไฟ servo (แนะนำ) | ตัดไฟ servo ได้แม้เว็บ/WiFi ล่ม (โปรเจกต์นี้หยุดจากเว็บ + dead-man) | ฿20–60 |
 | สาย Dupont, breadboard, terminal block | | ฿100–200 |
 
 **ทางเลือกจอ:** LCD 1602 + I2C (ถูกสุด), TFT ST7789/ILI9341 (สี, ทำ GUI ได้), Nextion (จอสัมผัสมี GUI editor)
@@ -99,7 +99,7 @@ GPIO22 (SCL) ─►  SCL      │
                  CH0..CH5 ──► Servo 1..6 (สายส้ม=สัญญาณ, แดง=V+, น้ำตาล=GND)
 
 OLED SSD1306 ── ต่อบัส I2C เดียวกัน (SDA/SCL) แอดเดรส 0x3C (PCA9685 = 0x40)
-E-Stop ── ต่ออนุกรมกับไฟ V+ ของ servo (ตัดไฟจริง) + ต่อเข้า GPIO เพื่อให้ซอฟต์แวร์รู้
+สวิตช์ตัดไฟ (แนะนำ) ── ต่ออนุกรมกับไฟ V+ ของ servo (ตัดไฟจริง) · หยุดแบบซอฟต์แวร์ใช้ปุ่ม STOP บนเว็บ + dead-man ใน firmware
 ```
 
 ### 2.3 ข้อผิดพลาดที่มือใหม่เจอบ่อย ⚠️
@@ -127,7 +127,7 @@ E-Stop ── ต่ออนุกรมกับไฟ V+ ของ servo (ต
   - **Joint limits** (มุมต่ำสุด/สูงสุดต่อข้อ) และ calibration offset
   - **Smooth motion** — ไม่กระโดดไปมุมเป้าหมายทันที ใช้ interpolation/ramp ความเร็ว
   - **Non-blocking loop** (ห้ามใช้ `delay()` ยาว ๆ) เพื่อรับคำสั่งไปพร้อมขยับ
-  - Watchdog / E-Stop / ท่า Home เมื่อเปิดเครื่อง
+  - Dead-man watchdog (หยุดเองเมื่อเว็บเงียบ) / ปุ่ม STOP บนเว็บ / ท่า Home เมื่อเปิดเครื่อง
 
 ### 3.2 Kinematics (คณิตศาสตร์ของแขนกล)
 - **Forward Kinematics (FK):** รู้มุมทุกข้อ → คำนวณตำแหน่งปลายแขน (x, y, z)
@@ -166,7 +166,7 @@ E-Stop ── ต่ออนุกรมกับไฟ V+ ของ servo (ต
 | Web Serial API (Chrome) | ⭐⭐ | สาย USB | เว็บคุมบอร์ดผ่าน USB โดยตรง |
 | แอปจริง: Flutter / React Native / PWA | ⭐⭐⭐⭐ | — | ทำทีหลังเมื่อ protocol นิ่งแล้ว |
 
-**Topic MQTT ตัวอย่าง:** `robot/arm1/cmd` (ส่งคำสั่ง), `robot/arm1/state` (ส่งสถานะ/มุมปัจจุบัน), `robot/arm1/estop`
+**Topic MQTT ตัวอย่าง:** `robot/arm1/cmd` (ส่งคำสั่ง), `robot/arm1/state` (ส่งสถานะ/มุมปัจจุบัน), `robot/arm1/status` (online/offline) · ใช้ prefix เฉพาะของตัวเอง อย่าใช้ตัวอย่างนี้ตรง ๆ
 
 **ความปลอดภัย:** ถ้าเปิดให้ควบคุมจากอินเทอร์เน็ต ต้องมี username/password + TLS และห้ามเปิดพอร์ตตรงเข้าบ้าน — แขนกลขยับได้จริง อาจชนคน/ของ
 
@@ -206,7 +206,7 @@ UI / Python ┤      (รับ JSON command เดียวกัน)
 | 4 | Wokwi: ESP32 Web Server + WebSocket + หน้าเว็บ slider บนมือถือ | ❌ |
 | 5 | Simulator 3D บนเว็บ / MuJoCo — ทำ teach & playback, หยิบ-วางเสมือน | ❌ |
 | 6 | สั่งซื้อและประกอบ Kit, ต่อวงจรไฟแยก, calibrate | ✅ |
-| 7 | อัปโหลด firmware เดิมลงของจริง, ปรับจูน, เพิ่ม E-Stop | ✅ |
+| 7 | อัปโหลด firmware เดิมลงของจริง, ปรับจูน, ทดสอบปุ่ม STOP + dead-man | ✅ |
 | 8 | ต่อยอด: MQTT ควบคุมระยะไกล, กล้อง + OpenCV หาวัตถุแล้วหยิบ | ✅ |
 
 **งบชุดเริ่มต้น (Kit 6DOF MG996R + ESP32 + PCA9685 + PSU + OLED + อุปกรณ์จุกจิก): ประมาณ ฿2,500–4,000**

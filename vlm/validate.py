@@ -1,4 +1,6 @@
 import math
+
+from objects import check_objects
 from typing import List, Dict, Any, Tuple
 
 def validate_plan(
@@ -26,6 +28,9 @@ def validate_plan(
     list of str
         Empty list if the plan is valid; otherwise a list of error messages.
     """
+    obj_err = check_objects(objects)          # malformed objects must not crash the planner
+    if obj_err:
+        return [f"objects: {obj_err}"]
     # --------------------------------------------------------------------- #
     # 1.  Early type check for the plan structure
     # --------------------------------------------------------------------- #

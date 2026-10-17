@@ -190,7 +190,7 @@
                 <b>ตรวจความแม่น</b>
                 <p>วางกล่องที่ตำแหน่งที่รู้ แล้วรันบน Pi — พิกัดที่พิมพ์ออกมาควรคลาดไม่เกิน 3 มม. ถ้าเกินให้ทำข้อ 4–7 ใหม่ · ต่อด้วยสั่งแขนไปลอยเหนือกล่องเพื่อดูด้วยตา</p>
                 <pre><code>cd ~/robot_101/vision &amp;&amp; python3 vision_pick.py --source 0 --dry-run --no-gui</code></pre>
-                <pre><code>python3 ~/robot_101/pi/arm.py ik X Y 80</code></pre>
+                <pre><code>python3 ~/robot_101/pi/arm.py --port /dev/ttyUSB0 ik X Y 80</code></pre>
             </li>
         </ol>
 

@@ -13,7 +13,7 @@
   <div class="crumb"><a href="index.html">เอกสาร</a> › Raspberry Pi 5</div>
   <p class="eyebrow">ระบบ · Raspberry Pi 5 + ESP32</p>
   <h1>Pi 5 เป็นสมอง ESP32 คุมมอเตอร์</h1>
-  <p class="lede">ใช้ Raspberry Pi 5 ทำงานหนัก (กล้อง, broker, เว็บ, VLM planner) ส่วน ESP32 ทำงานที่ต้องตรงเวลา (servo, E-STOP) — firmware เดิมใช้ได้ทันที</p>
+  <p class="lede">ใช้ Raspberry Pi 5 ทำงานหนัก (กล้อง, broker, เว็บ, VLM planner) ส่วน ESP32 ทำงานที่ต้องตรงเวลา (servo, dead-man) — firmware เดิมใช้ได้ทันที</p>
 
   <h2>ผังระบบ</h2>
   <figure class="diagram" style="margin:0">
@@ -68,7 +68,7 @@
       <rect class="blk" x="610" y="90" width="150" height="106" rx="16"/>
       <text class="t" x="626" y="116">ESP32</text>
       <text class="s" x="626" y="136">firmware เดิม</text>
-      <text class="s" x="626" y="154">IK · motion · E-STOP</text>
+      <text class="s" x="626" y="154">IK · motion · dead-man</text>
       <text class="s" x="626" y="172">OLED</text>
       <rect class="blk" x="610" y="250" width="130" height="62" rx="14"/>
       <text class="t" x="626" y="276">PCA9685</text><text class="s" x="626" y="294">16-ch PWM</text>
@@ -152,10 +152,11 @@ bash ~/robot_101/pi/setup.sh</code></pre>
 <p>อัปเดตทีหลัง: <code>cd ~/robot_101 &amp;&amp; git pull</code> (เว็บใช้ไฟล์ใหม่ทันที)</p></li>
     <li><b>(ทางเลือก) ติดตั้ง VLM planner</b><p>ให้สั่งแขนด้วยข้อความจากมือถือ/คอมได้ · ถาม API key (กด Enter ข้ามได้ จะใช้ mock planner) · เก็บ key ใน <code>/etc/robot101/planner.env</code> สิทธิ์ 600</p>
 <pre><code>bash ~/robot_101/pi/setup-planner.sh</code></pre></li>
-    <li><b>เปลี่ยน broker ใน firmware</b><p>ตั้ง <code>MQTT_HOST</code> ใน <code>main.cpp</code> เป็น <b>IP</b> ของ Pi (ESP32 ไม่รู้จักชื่อ <code>.local</code>) และใส่ <code>MQTT_USER</code>/<code>MQTT_PASS</code> ใน <code>secrets.h</code> แล้วอัปโหลดใหม่</p></li>
+    <li><b>เปลี่ยน broker ใน firmware</b><p>ตั้ง <code>MQTT_HOST</code> ใน <code>secrets.h</code> เป็น <b>IP</b> ของ Pi (ESP32 ไม่รู้จักชื่อ <code>.local</code>) และใส่ <code>MQTT_USER</code>/<code>MQTT_PASS</code> ใน <code>secrets.h</code> แล้วอัปโหลดใหม่</p></li>
     <li><b>เปิดจากมือถือ</b><p><code>http://robotpi.local:8080/remote.html</code> → ⚙ ใส่ broker <code>ws://robotpi.local:9001</code> พร้อม user/รหัส MQTT</p></li>
   </ol>
-  <div class="note"><b>สำคัญ:</b> ปุ่ม E-STOP ยังต่ออยู่ที่ ESP32 และตัดไฟ servo ได้เสมอ แม้ Pi ค้างหรือรีบูต</div>
+  <div class="note"><b>Mosquitto บน Pi:</b> มีรหัสผ่านแต่<b>ไม่เข้ารหัส</b> (ไม่มี TLS/ACL) ใช้ในวง LAN บ้านเท่านั้น ห้ามเปิดพอร์ต 1883/9001 ออกอินเทอร์เน็ต · ตั้ง <code>MQTT_PREFIX</code> เฉพาะของตัวเอง</div>
+  <div class="note"><b>สำคัญ:</b> ถ้า Pi ค้างหรือรีบูต heartbeat จะหยุด และ dead-man ใน ESP32 ทำให้แขนหยุดค้างท่าภายใน 2 วินาที (ไม่ได้ตัดไฟ) · ติดสวิตช์ตัดไฟ servo ไว้ใกล้มือ</div>
 
   <footer>robot_101 · หน้านี้อยู่ใน <code>sim/docs/raspberry-pi.html</code></footer>
 </main>

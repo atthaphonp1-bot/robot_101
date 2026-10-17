@@ -79,12 +79,20 @@ class Arm:
         import websocket  # pip install websocket-client
         self.ws = websocket.create_connection(url, timeout=10)
 
+    def heartbeat(self):
+        """Feed the firmware dead-man watchdog (it holds position after 2 s of silence)."""
+        self.ws.send('{"hb":1}')
+        self.last_hb = time.time()
+
     def send(self, cmd, timeout=15):
+        self.heartbeat()
         self.ws.send(json.dumps(cmd))
         print("  →", cmd)
         time.sleep(0.15)
         end = time.time() + timeout
         while time.time() < end:
+            if time.time() - self.last_hb > 0.4:
+                self.heartbeat()
             msg = json.loads(self.ws.recv())
             if "err" in msg:
                 raise RuntimeError(f"แขนตอบ error: {msg['err']} ({cmd})")

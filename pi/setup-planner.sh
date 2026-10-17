@@ -56,11 +56,15 @@ if [[ ! -f "${ENV_FILE}" ]]; then
     printf "\n" >&2  # newline after the prompt
 
     # Build temporary file with correct permissions
+    PLANNER_TOKEN="$(openssl rand -hex 16)"   # shared secret the web UI sends as X-Planner-Token
+    NEW_TOKEN=1
     TMPFILE=$(mktemp)
     {
         echo "PLANNER_HOST=0.0.0.0"
         echo "PLANNER_PORT=${PORT}"
-        echo "PLANNER_ORIGINS=http://${HOST_NAME}.local:8080,http://${IP}:8080,http://localhost:8791"
+        # browsers allowed to call the planner: the Pi web UI by name/IP; :8791 = the Mac dev server
+        echo "PLANNER_ORIGINS=http://${HOST_NAME}.local:8080,http://${HOST_NAME}:8080,http://${IP}:8080,http://localhost:8791"
+        echo "PLANNER_TOKEN=${PLANNER_TOKEN}"
         if [[ -n "${API_KEY}" ]]; then
             echo "ANTHROPIC_API_KEY=${API_KEY}"
         fi
@@ -71,6 +75,11 @@ if [[ ! -f "${ENV_FILE}" ]]; then
     say "Created ${ENV_FILE} (mode 600, owned by root)."
 else
     say "Existing ${ENV_FILE} found – keeping it unchanged."
+    if ! sudo grep -q '^PLANNER_TOKEN=' "${ENV_FILE}"; then      # older install: add a token
+        PLANNER_TOKEN="$(openssl rand -hex 16)"
+        NEW_TOKEN=1
+        echo "PLANNER_TOKEN=${PLANNER_TOKEN}" | sudo tee -a "${ENV_FILE}" >/dev/null
+    fi
     say "To edit it later run: sudo nano ${ENV_FILE}"
 fi
 
@@ -130,6 +139,11 @@ printf "| Simulator URL: http://%s.local:8080/ (แท็บ กล้อง →
 printf "| Planner URL:   http://%s.local:%d/health |\n" "${HOST_NAME}" "${PORT}"
 printf "| เพิ่ม/เปลี่ยน API key: sudo nano %s แล้ว sudo systemctl restart robot-planner |\n" "${ENV_FILE}"
 printf "| ดู log: journalctl -u robot-planner -f |\n"
+if [[ "${NEW_TOKEN:-0}" == 1 ]]; then
+    printf "| Planner token (ใส่ในช่อง token แท็บ กล้อง ของ Simulator ครั้งเดียว): %s |\n" "${PLANNER_TOKEN}"
+else
+    printf "| ดู planner token: sudo grep PLANNER_TOKEN %s |\n" "${ENV_FILE}"
+fi
 printf "+---------------------------------------------+\n"
 
 exit 0

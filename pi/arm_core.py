@@ -24,6 +24,7 @@ class Arm:
         poll_interval: float = 0.1,
         timeout: float = 15.0,
         max_lines: int = 50,
+        heartbeat: bool = True,
     ):
         # store every argument as an attribute of the same name
         self.port = port
@@ -32,11 +33,22 @@ class Arm:
         self.poll_interval = poll_interval
         self.timeout = timeout
         self.max_lines = max_lines
+        self.heartbeat = heartbeat      # keep the firmware dead-man fed ({"hb":1} at most every 0.4 s)
+        self._last_hb = None
 
     # --------------------------------------------------------------------- #
     # Low‑level communication
     # --------------------------------------------------------------------- #
     def send(self, cmd: Mapping[str, Any]) -> Dict[str, Any]:
+        """Send a command, preceded by a heartbeat when one is due (dead-man watchdog)."""
+        if self.heartbeat and "hb" not in cmd:
+            now = self.clock()
+            if self._last_hb is None or now - self._last_hb > 0.4:
+                self._last_hb = now
+                self._exchange({"hb": 1})
+        return self._exchange(cmd)
+
+    def _exchange(self, cmd: Mapping[str, Any]) -> Dict[str, Any]:
         """Send a JSON command and return the first valid reply dict.
 
         The command dictionary is JSON‑encoded in the most compact form,

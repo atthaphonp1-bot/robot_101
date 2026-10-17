@@ -8,6 +8,7 @@ Uses the cloud VLM when ANTHROPIC_API_KEY is set (phase 1, not wired yet); other
 rule-based mock planner so the whole flow can be tested without a key. The key is read
 from the environment only and is never sent to the browser.
 """
+import hmac
 import json
 import os
 import sys
@@ -16,12 +17,15 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from commands import plan_to_commands  # noqa: E402
 from mock import mock_plan  # noqa: E402
+from objects import check_objects  # noqa: E402
 from validate import validate_plan  # noqa: E402
 
 PORT = int(os.environ.get("PLANNER_PORT", "8792"))
 HOST = os.environ.get("PLANNER_HOST", "127.0.0.1")       # 0.0.0.0 on the Pi (set by pi/setup-planner.sh)
 ALLOWED_ORIGINS = {o.strip() for o in os.environ.get(
-    "PLANNER_ORIGINS", "http://localhost:8791,http://127.0.0.1:8791").split(",") if o.strip()}
+    "PLANNER_ORIGINS", "http://localhost:8791,http://127.0.0.1:8791").split(",") if o.strip()}   # :8791 = Mac dev server
+TOKEN = os.environ.get("PLANNER_TOKEN", "")                # optional shared secret (header X-Planner-Token)
+MAX_BODY = 2_000_000
 
 
 def vlm_plan(text, objects, image):
@@ -52,7 +56,7 @@ class Handler(BaseHTTPRequestHandler):
         origin = self.headers.get("Origin", "")
         if origin in ALLOWED_ORIGINS:
             self.send_header("Access-Control-Allow-Origin", origin)
-            self.send_header("Access-Control-Allow-Headers", "Content-Type")
+            self.send_header("Access-Control-Allow-Headers", "Content-Type, X-Planner-Token")
             self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Content-Length", str(len(data)))
@@ -64,18 +68,33 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         if self.path == "/health":
-            return self._send(200, {"ok": True, "vlm": bool(os.environ.get("ANTHROPIC_API_KEY"))})
+            return self._send(200, {"ok": True, "vlm": bool(os.environ.get("ANTHROPIC_API_KEY")), "token": bool(TOKEN)})
         self._send(404, {"error": "not found"})
 
     def do_POST(self):
         if self.path != "/plan":
             return self._send(404, {"error": "not found"})
+        if TOKEN and not hmac.compare_digest(self.headers.get("X-Planner-Token", ""), TOKEN):
+            return self._send(401, {"error": "bad or missing X-Planner-Token"})
         try:
-            length = min(int(self.headers.get("Content-Length", 0)), 8_000_000)
+            length = int(self.headers.get("Content-Length", 0))
+        except ValueError:
+            length = -1
+        if length < 0 or length > MAX_BODY:
+            return self._send(413 if length > MAX_BODY else 400, {"error": "bad Content-Length (max 2 MB)"})
+        try:
             body = json.loads(self.rfile.read(length) or b"{}")
+        except ValueError as e:
+            return self._send(400, {"error": f"bad json: {e}"})
+        if not isinstance(body, dict):
+            return self._send(400, {"error": "body must be a JSON object"})
+        err = check_objects(body.get("objects") or [])
+        if err:
+            return self._send(400, {"error": err})
+        try:
             self._send(200, make_plan(body))
-        except (ValueError, TypeError) as e:
-            self._send(400, {"error": f"bad request: {e}"})
+        except Exception as e:   # never drop the connection without an answer
+            self._send(500, {"error": f"planner error: {type(e).__name__}: {e}"})
 
     def log_message(self, fmt, *args):
         sys.stderr.write("planner: " + fmt % args + "\n")

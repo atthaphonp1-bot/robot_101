@@ -1,7 +1,7 @@
 // Configuration and state
 let client = null;
 let armOnline = false;
-let estop = false;
+let deadman = false;   // firmware dead-man tripped (no heartbeat) -> arm holds position
 let moving = false;
 let playing = false;
 let touching = false;
@@ -19,8 +19,12 @@ const initialJoints = [90, 90, 135, 135, 90, 80];
 function loadConfig() {
     try {
         const cfg = JSON.parse(localStorage.getItem('armRemote.cfg')) || {};
-        document.getElementById('brokerUrl').value = cfg.url || 'wss://broker.hivemq.com:8884/mqtt';
-        document.getElementById('topicPrefix').value = cfg.prefix || 'robot101/arm1';
+        // default: the private broker on the Pi that served this page; no shared/public default prefix
+        const piBroker = location.protocol === 'http:' && location.hostname && !['localhost', '127.0.0.1'].includes(location.hostname) ? `ws://${location.hostname}:9001` : '';
+        document.getElementById('brokerUrl').value = cfg.url || piBroker;
+        document.getElementById('brokerUrl').placeholder = 'ws://robotpi.local:9001';
+        document.getElementById('topicPrefix').value = cfg.prefix || '';
+        document.getElementById('topicPrefix').placeholder = 'prefix เดียวกับ MQTT_PREFIX ใน firmware';
         document.getElementById('mqttUser').value = cfg.user || '';
     } catch (e) {
         console.error('Failed to load config:', e);
@@ -75,8 +79,8 @@ function setStatus() {
     if (!client || !client.connected) {
         statusEl.textContent = 'ออฟไลน์';
         statusEl.className = 'pill';
-    } else if (estop) {
-        statusEl.textContent = 'E-STOP';
+    } else if (deadman) {
+        statusEl.textContent = 'NO LINK — แขนหยุด';
         statusEl.className = 'pill bad';
     } else if (armOnline) {
         statusEl.textContent = 'แขน online';
@@ -98,7 +102,7 @@ function send(obj) {
 
     const prefix = document.getElementById('topicPrefix').value;
     const json = JSON.stringify(obj);
-    client.publish(prefix + '/cmd', json);
+    client.publish(prefix + '/cmd', json, obj.stop ? {qos: 1} : {});
     log('→ ' + json);
     return true;
 }
@@ -199,8 +203,10 @@ function initUI() {
             return;
         }
 
-        const url = document.getElementById('brokerUrl').value;
-        const prefix = document.getElementById('topicPrefix').value;
+        const url = document.getElementById('brokerUrl').value.trim();
+        const prefix = document.getElementById('topicPrefix').value.trim();
+        if (!url) { toast('ใส่ Broker URL เช่น ws://robotpi.local:9001'); return; }
+        if (!prefix || prefix.startsWith('robot101/')) { toast('ใส่ prefix เฉพาะของคุณ (ตรงกับ firmware)'); return; }
         const user = document.getElementById('mqttUser').value;
         const pass = document.getElementById('mqttPass').value;
 
@@ -253,7 +259,7 @@ function initUI() {
             } else if (topic.endsWith('/state')) {
                 try {
                     const obj = JSON.parse(str);
-                    estop = obj.estop || false;
+                    deadman = !!obj.deadman;
                     moving = obj.moving || false;
 
                     // Update joints text
@@ -302,8 +308,12 @@ function initUI() {
 
     // Set up stop button
     document.getElementById('stopBtn').addEventListener('click', () => {
-        send({stop: 1});
+        // STOP must get through: send it 3x, 100 ms apart, with QoS 1
         playing = false;
+        if (send({stop: 1})) {
+            const prefix = document.getElementById('topicPrefix').value;
+            for (let k = 1; k <= 2; k++) setTimeout(() => client?.connected && client.publish(prefix + '/cmd', '{"stop":1}', {qos: 1}), k * 100);
+        }
         haptic();
     });
 

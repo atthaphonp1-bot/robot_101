@@ -89,18 +89,18 @@
 
       <!-- ===== band 3 ===== -->
       <rect class="blk" x="40" y="350" width="150" height="80" rx="14"/><text class="t" x="54" y="376">รับคำสั่ง</text><text class="s" x="54" y="396">WS · MQTT · Serial</text><text class="s" x="54" y="414">JSON 1 บรรทัด</text>
-      <rect class="blk" x="220" y="350" width="150" height="80" rx="14"/><text class="t" x="234" y="376">handleCommand</text><text class="s" x="234" y="396">ตรวจ E-STOP</text><text class="s" x="234" y="414">joint limit</text>
+      <rect class="blk" x="220" y="350" width="150" height="80" rx="14"/><text class="t" x="234" y="376">handleCommand</text><text class="s" x="234" y="396">ตรวจ dead-man</text><text class="s" x="234" y="414">joint limit</text>
       <rect class="blk" x="400" y="350" width="150" height="80" rx="14"/><text class="t" x="414" y="376">autoIK</text><text class="s" x="414" y="396">x,y,z,pitch</text><text class="s" x="414" y="414">→ มุม J1–J4</text>
       <rect class="blk" x="580" y="350" width="150" height="80" rx="14"/><text class="t" x="594" y="376">setTargets</text><text class="s" x="594" y="396">sync move</text><text class="s" x="594" y="414">ถึงพร้อมกัน</text>
       <rect class="blk" x="40" y="460" width="150" height="80" rx="14"/><text class="t" x="54" y="486">จอ OLED</text><text class="s" x="54" y="506">IP · มุม · สถานะ</text><text class="s" x="54" y="524">ทุก 200 ms</text>
-      <rect class="blk" x="220" y="460" width="150" height="80" rx="14" style="stroke:var(--c-red)"/><text class="t" x="234" y="486">ปุ่ม E-STOP</text><text class="s" x="234" y="506">GPIO4 · กด=สลับ</text><text class="s" x="234" y="524">หยุดทันที</text>
+      <rect class="blk" x="220" y="460" width="150" height="80" rx="14" style="stroke:var(--c-red)"/><text class="t" x="234" y="486">Dead-man</text><text class="s" x="234" y="506">ไม่มี hb 2 วิ</text><text class="s" x="234" y="524">หยุดค้างท่า</text>
       <rect class="blk" x="400" y="460" width="150" height="80" rx="14"/><text class="t" x="414" y="486">writeServo</text><text class="s" x="414" y="506">มุม → pulse</text><text class="s" x="414" y="524">500–2500 µs</text>
       <rect class="blk" x="580" y="460" width="150" height="80" rx="14"/><text class="t" x="594" y="486">Motion loop</text><text class="s" x="594" y="506">50 Hz (ทุก 20 ms)</text><text class="s" x="594" y="524">ขยับทีละนิด °/s</text>
-      <rect class="blk" x="760" y="460" width="120" height="80" rx="14"/><text class="t" x="774" y="486">ส่งสถานะ</text><text class="s" x="774" y="506">state · moving</text><text class="s" x="774" y="524">estop</text>
+      <rect class="blk" x="760" y="460" width="120" height="80" rx="14"/><text class="t" x="774" y="486">ส่งสถานะ</text><text class="s" x="774" y="506">state · moving</text><text class="s" x="774" y="524">deadman</text>
 
       <!-- ===== band 4 ===== -->
       <rect class="blk" x="40" y="615" width="150" height="60" rx="14"/><text class="t" x="54" y="640">PSU servo</text><text class="s" x="54" y="660">5–6V 10A</text>
-      <rect class="blk" x="220" y="615" width="110" height="60" rx="14" style="stroke:var(--c-red)"/><text class="t" x="234" y="640">E-STOP</text><text class="s" x="234" y="660">หน้าสัมผัส NC</text>
+      <rect class="blk" x="220" y="615" width="110" height="60" rx="14" style="stroke:var(--c-red)"/><text class="t" x="234" y="640">สวิตช์ตัดไฟ</text><text class="s" x="234" y="660">แนะนำ</text>
       <rect class="blk-hi" x="400" y="615" width="200" height="60" rx="14"/><text class="t" x="414" y="640">PCA9685</text><text class="s" x="414" y="660">16 ช่อง · V+ มี C 1000µF</text>
       <rect class="blk" x="640" y="615" width="240" height="60" rx="14"/><text class="t" x="654" y="640">ไฟบอร์ด</text><text class="s" x="654" y="660">ESP32: USB 5V · Pi: 5V 5A · GND ร่วม</text>
 
@@ -126,7 +126,7 @@
       <span><i style="background:var(--c-blue)"></i>คำสั่ง / ข้อมูล</span>
       <span><i style="background:var(--c-purple)"></i>MQTT · PWM</span>
       <span><i style="background:var(--c-green)"></i>I2C · สถานะย้อนกลับ (เส้นประ)</span>
-      <span><i style="background:var(--c-red)"></i>ไฟ servo · E-STOP</span>
+      <span><i style="background:var(--c-red)"></i>ไฟ servo · dead-man</span>
       <span><i style="background:var(--muted)"></i>USB · กลไก</span>
     </div>
   </figure>
@@ -179,7 +179,14 @@
     <tr><td>J5 ข้อมือหมุน</td><td>CH4</td><td>26</td><td>0–180°</td><td>90°</td></tr>
     <tr><td>J6 กริปเปอร์</td><td>CH5</td><td>25</td><td>10–120°</td><td>80°</td></tr>
   </table>
-  <div class="note"><b>ความปลอดภัย 2 ชั้น:</b> ปุ่ม E-STOP ตัดไฟ servo โดยตรง (ฮาร์ดแวร์) และแจ้ง ESP32 ให้หยุดรับคำสั่ง (ซอฟต์แวร์) — ทำงานได้แม้ Pi หรือเน็ตล่ม</div>
+  <h2 id="deadman">หยุดแขน: STOP บนเว็บ + dead-man</h2>
+  <table>
+    <tr><th>กลไก</th><th>ทำงานยังไง</th><th>ข้อจำกัด</th></tr>
+    <tr><td>ปุ่ม STOP</td><td>เว็บ/มือถือส่ง <code>{"stop":1}</code> 3 ครั้ง (MQTT QoS 1)</td><td>ต้องมีลิงก์ถึงแขน</td></tr>
+    <tr><td>Dead-man</td><td>เว็บ, <code>arm.py</code>, <code>vision_pick.py</code> ส่ง <code>{"hb":1}</code> ทุก ≤0.5 วิ · เงียบเกิน 2 วิ → แขนค้างท่า ไม่รับคำสั่งขยับจนกว่าจะได้ hb ใหม่ · state มี <code>"deadman":true</code> · OLED ขึ้น NO LINK</td><td>ค้างท่า ไม่ได้ตัดไฟ</td></tr>
+    <tr><td>สวิตช์ตัดไฟ servo</td><td>ตัดไฟจริง (แนะนำ)</td><td>ต้องเอื้อมถึง</td></tr>
+  </table>
+  <div class="note"><b>ความปลอดภัย:</b> ไม่มีปุ่ม E-STOP ฮาร์ดแวร์ — dead-man ช่วยกรณีลิงก์หลุด แต่ถ้า servo ผิดปกติหรือชนแล้วดัน ต้องตัดไฟเท่านั้น · ใช้ broker ส่วนตัวบน Pi ที่มีรหัสผ่าน (ใครส่งคำสั่งเข้า topic ได้ก็ส่ง heartbeat ได้)</div>
 
   <footer>robot_101 · <code>sim/docs/system.html</code></footer>
 </main>

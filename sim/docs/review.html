@@ -32,7 +32,7 @@
     <div class="card"><h3>Protocol เดียวทุกช่องทาง</h3><p>JSON ชุดเดียวกันผ่าน USB, Serial2, WebSocket, MQTT — ต่อยอดง่าย</p></div>
     <div class="card"><h3>Digital Twin</h3><p>Simulator กับแขนจริงรับคำสั่งเหมือนกัน ทดสอบโดยไม่มีฮาร์ดแวร์ได้</p></div>
     <div class="card"><h3>แยก secrets ออกแล้ว</h3><p><code>secrets.h</code> ไม่ขึ้น git · มี example ให้</p></div>
-    <div class="card"><h3>Safety 2 ชั้น</h3><p>E-STOP ตัดไฟจริง + firmware หยุดรับคำสั่ง</p></div>
+    <div class="card"><h3>Safety</h3><p>ปุ่ม STOP บนเว็บ + dead-man ใน firmware (+ สวิตช์ตัดไฟ servo แนะนำ)</p></div>
   </div>
 
   <h2>ปัญหาที่พบ</h2>
@@ -44,7 +44,7 @@
     <tr><td>4</td><td><b>Diagram ซ้ำ</b> — ผังระบบ/วงจร/เครือข่ายใน Simulator กับหน้า docs เริ่มไม่ตรงกัน (เช่น Pi ยังไม่อยู่ในผังของ Simulator)</td><td><code>sim/index.html</code>, <code>sim/docs/</code></td><td><span class="tag warn">กลาง</span></td></tr>
     <tr><td>5</td><td><b>สไตล์ 3 ชุด</b> — ตัวแปรสีไม่เหมือนกัน (เช่น <code>--c-gray</code> ที่ไม่มีจริง)</td><td>sim, remote, docs</td><td><span class="tag ok">ต่ำ</span></td></tr>
     <tr><td>6</td><td><b>Protocol ไม่มีสเปกกลาง</b> — คำสั่งใหม่ (<code>status</code>) ต้องไปไล่ดูโค้ด</td><td>—</td><td><span class="tag warn">กลาง</span></td></tr>
-    <tr><td>7</td><td><b><code>MQTT_HOST</code> อยู่ใน <code>main.cpp</code></b> แต่ user/pass อยู่ใน <code>secrets.h</code> — ย้ายไป Pi ต้องแก้ 2 ไฟล์</td><td><code>firmware/</code></td><td><span class="tag ok">ต่ำ</span></td></tr>
+    <tr><td>7</td><td><span class="tag ok">แก้แล้ว</span> <b><code>MQTT_HOST</code> เคยอยู่ใน <code>main.cpp</code></b> แต่ user/pass อยู่ใน <code>secrets.h</code> — ย้ายไป Pi ต้องแก้ 2 ไฟล์</td><td><code>firmware/</code></td><td><span class="tag ok">ต่ำ</span></td></tr>
     <tr><td>8</td><td><b>ไม่มี test อัตโนมัติ</b> — build firmware/รัน checks ด้วยมือทุกครั้ง</td><td>CI</td><td><span class="tag warn">กลาง</span></td></tr>
     <tr><td>9</td><td><b>ชื่อโฟลเดอร์ <code>sim/</code></b> แต่มีทั้ง remote และ docs (คือเว็บทั้งหมด)</td><td>โครงสร้าง</td><td><span class="tag ok">ต่ำ</span></td></tr>
   </table>

@@ -4,36 +4,42 @@ import sys
 
 
 def parse_cli(argv):
-    parser = argparse.ArgumentParser(add_help=False)
-    parser.add_argument('--port', default='/dev/ttyUSB0')
+    parser = argparse.ArgumentParser(
+        prog='arm.py', description='Control the robot arm over serial (USB: /dev/ttyUSB0, Pi UART: /dev/serial0).',
+        epilog='examples: arm.py home | arm.py ik 180 0 100 | arm.py --port /dev/serial0 status | arm.py run poses.json --loop')
+    parser.add_argument('--port', default='/dev/ttyUSB0', help='serial device (default /dev/ttyUSB0)')
     parser.add_argument('--baud', type=int, default=115200)
+    # --port / --baud are also accepted after the subcommand (arm.py home --port /dev/serial0)
+    common = argparse.ArgumentParser(add_help=False)
+    common.add_argument('--port', default=argparse.SUPPRESS)
+    common.add_argument('--baud', type=int, default=argparse.SUPPRESS)
     subparsers = parser.add_subparsers(dest='cmd', required=True)
 
     # home
-    subparsers.add_parser('home')
+    subparsers.add_parser(parents=[common], name='home')
     # stop
-    subparsers.add_parser('stop')
+    subparsers.add_parser(parents=[common], name='stop')
     # status
-    subparsers.add_parser('status')
+    subparsers.add_parser(parents=[common], name='status')
     # repl
-    subparsers.add_parser('repl')
+    subparsers.add_parser(parents=[common], name='repl')
     # j
-    pj = subparsers.add_parser('j')
+    pj = subparsers.add_parser(parents=[common], name='j')
     pj.add_argument('angles', nargs=6, type=float)
     # ik
-    pik = subparsers.add_parser('ik')
+    pik = subparsers.add_parser(parents=[common], name='ik')
     pik.add_argument('x', type=float)
     pik.add_argument('y', type=float)
     pik.add_argument('z', type=float)
     pik.add_argument('pitch', nargs='?', type=float, default=-90.0)
     # grip
-    pg = subparsers.add_parser('grip')
+    pg = subparsers.add_parser(parents=[common], name='grip')
     pg.add_argument('value', type=float)
     # speed
-    ps = subparsers.add_parser('speed')
+    ps = subparsers.add_parser(parents=[common], name='speed')
     ps.add_argument('value', type=float)
     # run
-    pr = subparsers.add_parser('run')
+    pr = subparsers.add_parser(parents=[common], name='run')
     pr.add_argument('path')
     pr.add_argument('--loop', action='store_true')
     pr.add_argument('--delay', type=float, default=0.3)
