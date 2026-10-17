@@ -1329,7 +1329,7 @@ $('#visPick').onclick = () => {
   stopPlayback(); program = buildDemo(targets); renderProgram(); startPlayback();
 };
 // typed command -> planner server (VLM or mock) -> show plan -> confirm -> run
-const PLANNER = 'http://localhost:8792';
+const PLANNER = `${location.protocol === 'https:' ? 'http:' : location.protocol}//${location.hostname || 'localhost'}:8792`;   // same machine that served this page (Mac or Pi)
 const esc = s => String(s).replace(/[&<>"]/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch]));
 let sayCmds = null;
 function commandsToPoses(cmds) {

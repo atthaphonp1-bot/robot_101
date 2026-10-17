@@ -119,6 +119,8 @@
 git clone https://github.com/atthaphonp1-bot/robot_101.git ~/robot_101
 bash ~/robot_101/pi/setup.sh</code></pre>
 <p>อัปเดตทีหลัง: <code>cd ~/robot_101 &amp;&amp; git pull</code> (เว็บใช้ไฟล์ใหม่ทันที)</p></li>
+    <li><b>(ทางเลือก) ติดตั้ง VLM planner</b><p>ให้สั่งแขนด้วยข้อความจากมือถือ/คอมได้ · ถาม API key (กด Enter ข้ามได้ จะใช้ mock planner) · เก็บ key ใน <code>/etc/robot101/planner.env</code> สิทธิ์ 600</p>
+<pre><code>bash ~/robot_101/pi/setup-planner.sh</code></pre></li>
     <li><b>เปลี่ยน broker ใน firmware</b><p>ตั้ง <code>MQTT_HOST</code> ใน <code>main.cpp</code> เป็น <b>IP</b> ของ Pi (ESP32 ไม่รู้จักชื่อ <code>.local</code>) และใส่ <code>MQTT_USER</code>/<code>MQTT_PASS</code> ใน <code>secrets.h</code> แล้วอัปโหลดใหม่</p></li>
     <li><b>เปิดจากมือถือ</b><p><code>http://robotpi.local:8080/remote.html</code> → ⚙ ใส่ broker <code>ws://robotpi.local:9001</code> พร้อม user/รหัส MQTT</p></li>
   </ol>

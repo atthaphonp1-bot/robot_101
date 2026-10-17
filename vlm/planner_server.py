@@ -19,7 +19,9 @@ from mock import mock_plan  # noqa: E402
 from validate import validate_plan  # noqa: E402
 
 PORT = int(os.environ.get("PLANNER_PORT", "8792"))
-ALLOWED_ORIGINS = {"http://localhost:8791", "http://127.0.0.1:8791"}
+HOST = os.environ.get("PLANNER_HOST", "127.0.0.1")       # 0.0.0.0 on the Pi (set by pi/setup-planner.sh)
+ALLOWED_ORIGINS = {o.strip() for o in os.environ.get(
+    "PLANNER_ORIGINS", "http://localhost:8791,http://127.0.0.1:8791").split(",") if o.strip()}
 
 
 def vlm_plan(text, objects, image):
@@ -80,5 +82,5 @@ class Handler(BaseHTTPRequestHandler):
 
 
 if __name__ == "__main__":
-    print(f"planner server on http://localhost:{PORT}  (VLM {'on' if os.environ.get('ANTHROPIC_API_KEY') else 'off -> mock'})")
-    ThreadingHTTPServer(("127.0.0.1", PORT), Handler).serve_forever()
+    print(f"planner server on http://{HOST}:{PORT}  (VLM {'on' if os.environ.get('ANTHROPIC_API_KEY') else 'off -> mock'})")
+    ThreadingHTTPServer((HOST, PORT), Handler).serve_forever()
