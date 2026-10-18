@@ -664,6 +664,65 @@
 
 <h3 id="deadman">ความปลอดภัย: หยุดจากเว็บ + dead-man</h3>
 <p>โปรเจกต์นี้ไม่มีปุ่ม E-STOP ฮาร์ดแวร์ หยุดแขนได้ 3 ทาง:</p>
+  <figure class="diagram" style="margin:16px 0">
+    <svg viewBox="0 0 830 300" role="img" aria-label="สถานะของ dead-man: ยังไม่เฝ้า ได้ heartbeat แรกแล้วเฝ้า เงียบเกิน 2 วินาทีแล้วหยุดค้างท่า ได้ heartbeat ใหม่แล้วปลดล็อก">
+  <path class="w green" d="M200 150H320"/>
+  <path class="w red" d="M500 140H620"/>
+  <path class="w blue" d="M710 190V250H410V190"/>
+  <path class="w green dash" d="M380 110V70H440V110"/>
+  <rect class="blk" x="30" y="110" width="170" height="80" rx="14"/>
+  <rect class="blk-hi" x="320" y="110" width="180" height="80" rx="14"/>
+  <rect class="blk" x="620" y="110" width="190" height="80" rx="14"/>
+  <text class="t" x="44" y="138">ยังไม่เฝ้า</text>
+  <text class="s" x="44" y="158">เปิดเครื่อง · ยังไม่เคยได้ hb</text>
+  <text class="s" x="44" y="176">Serial/arm.py ใช้ได้ปกติ</text>
+  <text class="t" x="334" y="138">เฝ้าอยู่ (ARMED)</text>
+  <text class="s" x="334" y="158">ได้ hb ทุก ≤ 0.5 วิ</text>
+  <text class="s" x="334" y="176">รับคำสั่งทุกอย่าง</text>
+  <text class="t" x="634" y="138">หยุดค้างท่า (TRIPPED)</text>
+  <text class="s" x="634" y="158">OLED: NO LINK</text>
+  <text class="s" x="634" y="176">ปฏิเสธ j / ik / grip / home</text>
+  <text class="s" x="212" y="140">hb ครั้งแรก</text>
+  <text class="s" x="512" y="130">เงียบ > 2 วิ</text>
+  <text class="s" x="470" y="268">ได้ hb ใหม่ → ปลดล็อก</text>
+  <text class="s" x="392" y="60">hb ทุก 0.5 วิ</text>
+  <text class="m" x="30" y="40">{&quot;hb&quot;:1}</text>
+  <text class="s" x="110" y="40">= heartbeat จากเว็บ / มือถือ / arm.py / vision_pick.py</text>
+  <text class="s" x="30" y="292">STOP · status · speed · hb ใช้ได้ทุกสถานะ — TRIPPED คือค้างท่า ไม่ได้ตัดไฟ servo</text>
+</svg>
+    <p style="margin:10px 4px 0;color:var(--muted);font-size:13px">สถานะของ dead-man ใน firmware</p>
+  </figure>
+  <figure class="diagram" style="margin:16px 0">
+    <svg viewBox="0 0 830 230" role="img" aria-label="ไทม์ไลน์ dead-man: heartbeat ทุก 0.5 วินาที ลิงก์หลุด เงียบเกิน 2 วินาที แขนหยุดค้างท่า">
+  <path class="w gray" d="M40 160H800"/>
+  <path class="w green" d="M40 160V115"/>
+  <path class="w green" d="M140 160V115"/>
+  <path class="w green" d="M240 160V115"/>
+  <path class="w green" d="M340 160V115"/>
+  <path class="w red dash" d="M370 60V175"/>
+  <path class="w red" d="M740 60V175"/>
+  <path class="w purple" d="M340 135H740"/>
+  <path class="w purple" d="M340 128V142"/>
+  <path class="w purple" d="M740 128V142"/>
+  <text class="t" x="40" y="30">ไทม์ไลน์: เว็บส่ง hb ทุก 0.5 วิ</text>
+  <text class="s" x="34" y="108">hb</text>
+  <text class="s" x="134" y="108">hb</text>
+  <text class="s" x="234" y="108">hb</text>
+  <text class="s" x="334" y="108">hb สุดท้าย</text>
+  <text class="t" x="378" y="72">WiFi หลุด / ปิดเว็บ</text>
+  <text class="s" x="450" y="128">เงียบเกิน 2 วิ (DEADMAN_MS)</text>
+  <text class="t" x="628" y="72">TRIP ≈ 3.5 วิ</text>
+  <text class="s" x="628" y="92">แขนหยุดค้างท่า</text>
+  <text class="s" x="36" y="182">0 วิ</text>
+  <text class="s" x="236" y="182">1</text>
+  <text class="s" x="436" y="182">2</text>
+  <text class="s" x="636" y="182">3</text>
+  <text class="s" x="790" y="182">4</text>
+  <text class="s" x="40" y="214">ส่ง hb ใหม่เมื่อไหร่ = ปลดล็อกทันที · แท็บที่ถูกซ่อนนาน ๆ หรือมือถือล็อกจอ ก็ trip เช่นกัน (ตั้งใจ)</text>
+</svg>
+    <p style="margin:10px 4px 0;color:var(--muted);font-size:13px">ตัวอย่าง: ลิงก์หลุดหลัง hb สุดท้าย → แขนหยุดหลังเงียบครบ 2 วินาที</p>
+  </figure>
+
 <table>
   <tr><th>ทาง</th><th>ทำงานยังไง</th><th>ข้อจำกัด</th></tr>
   <tr><td>ปุ่ม STOP บนเว็บ/มือถือ</td><td>ส่ง <code>{"stop":1}</code> 3 ครั้ง (MQTT QoS 1)</td><td>ต้องมีเน็ต/WiFi และหน้าเว็บทำงาน</td></tr>
